@@ -1,6 +1,9 @@
 { config, pkgs, inputs, ... }:
 
 {
+  # ── Nixpkgs ─────────────────────────────────────────────
+  nixpkgs.config.allowUnfree = true;
+
   # ── Boot ──────────────────────────────────────────────
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -24,6 +27,8 @@
   nix.settings = {
     experimental-features = [ "nix-command" "flakes" ];
     auto-optimise-store = true;
+    substituters = [ "https://ghostty.cachix.org" ];
+    trusted-public-keys = [ "ghostty.cachix.org-1:QB389yTa6gTyneehvqG58y0WnHjQOqgnA+wBnpWWxns=" ];
   };
 
   # auto garbage collect

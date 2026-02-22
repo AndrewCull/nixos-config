@@ -1,30 +1,19 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
-  # ── GTK ───────────────────────────────────────────────
-  gtk = {
-    enable = true;
-    theme = {
-      package = pkgs.adw-gtk3;
-      name = "adw-gtk3-dark";
+  # Stylix handles GTK theme, QT theme, cursor, and fonts.
+  # We only need overrides it doesn't cover.
+
+  # ── Icon theme (stylix doesn't set this) ─────────────
+  gtk.iconTheme = {
+    package = pkgs.colloid-icon-theme.override {
+      schemeVariants = [ "default" ];
+      colorVariants = [ "teal" ];
     };
-    iconTheme = {
-      package = pkgs.colloid-icon-theme.override {
-        schemeVariants = [ "default" ];
-        colorVariants = [ "dark" ];
-      };
-      name = "Colloid-dark";
-    };
+    name = "Colloid-teal-dark";
   };
 
-  # ── QT (match GTK look) ──────────────────────────────
-  qt = {
-    enable = true;
-    platformTheme.name = "adwaita";
-    style.name = "adwaita-dark";
-  };
-
-  # force dark mode for apps that check
+  # ── Force dark mode for apps that check dconf ────────
   dconf.settings = {
     "org/gnome/desktop/interface" = {
       color-scheme = "prefer-dark";
