@@ -1,6 +1,88 @@
 { config, pkgs, lib, ... }:
 
 let
+  # ── Wallpapers from dharmx/walls ──────────────────────
+  wallpapers = pkgs.fetchFromGitHub {
+    owner = "dharmx";
+    repo = "walls";
+    rev = "6bf4d733ebf2b484a37c17d742eb47e5139e6a14";
+    hash = "sha256-Ldvnevfspacy1Tavrxg3/LCd99GdwkdA+0yLxQvWXHw=";
+    sparseCheckout = [
+      "nord"
+      "natura"
+      "abstract"
+      "minimal"
+      "industrial"
+    ];
+  };
+
+  wallpaper-daemon = pkgs.writeShellScript "wallpaper-daemon" ''
+    set -euo pipefail
+
+    WALLS="${wallpapers}"
+    FOLDERS="nord natura abstract minimal industrial"
+
+    # Collect all wallpaper paths
+    declare -A WS_WALLPAPER
+    ALL_WALLS=()
+    for f in $FOLDERS; do
+      for img in "$WALLS/$f"/*; do
+        [ -f "$img" ] && ALL_WALLS+=("$img")
+      done
+    done
+
+    if [ ''${#ALL_WALLS[@]} -eq 0 ]; then
+      echo "wallpaper-daemon: no wallpapers found" >&2
+      exit 1
+    fi
+
+    # Assign a random wallpaper to each workspace index 1-5
+    for ws in 1 2 3 4 5; do
+      idx=$(( RANDOM % ''${#ALL_WALLS[@]} ))
+      WS_WALLPAPER[$ws]="''${ALL_WALLS[$idx]}"
+    done
+
+    # Build a map from niri workspace ID -> idx (1-based) using WorkspacesChanged
+    declare -A ID_TO_IDX
+
+    update_id_map() {
+      local json="$1"
+      # Parse the workspaces array and build id->idx mapping
+      eval "$(echo "$json" | ${pkgs.jq}/bin/jq -r '
+        .WorkspacesChanged.workspaces[]
+        | "ID_TO_IDX[\(.id)]=\(.idx)"
+      ' 2>/dev/null)" || true
+    }
+
+    # Set initial wallpaper for workspace 1
+    ${pkgs.swww}/bin/swww img "''${WS_WALLPAPER[1]}" --transition-type fade --transition-duration 0.7
+
+    CURRENT_IDX=1
+
+    # Listen to niri event stream (process substitution to keep vars in main shell)
+    while read -r line; do
+      # Update workspace ID map when workspace config changes
+      if echo "$line" | ${pkgs.jq}/bin/jq -e '.WorkspacesChanged' >/dev/null 2>&1; then
+        update_id_map "$line"
+      fi
+
+      # Handle workspace activation
+      ws_id=$(echo "$line" | ${pkgs.jq}/bin/jq -r '.WorkspaceActivated.id // empty' 2>/dev/null)
+      focused=$(echo "$line" | ${pkgs.jq}/bin/jq -r '.WorkspaceActivated.focused // empty' 2>/dev/null)
+
+      if [ -n "$ws_id" ] && [ "$focused" = "true" ]; then
+        ws_idx="''${ID_TO_IDX[$ws_id]:-}"
+        if [ -n "$ws_idx" ] && [ "$ws_idx" -ge 1 ] && [ "$ws_idx" -le 5 ] && [ "$ws_idx" != "$CURRENT_IDX" ]; then
+          target="''${WS_WALLPAPER[$ws_idx]}"
+          if [ -n "$target" ]; then
+            ${pkgs.swww}/bin/swww img "$target" --transition-type fade --transition-duration 0.7
+            CURRENT_IDX="$ws_idx"
+          fi
+        fi
+      fi
+    done < <(niri msg event-stream)
+  '';
+
   inherit (config.lib.niri.actions)
     spawn
     close-window
@@ -76,7 +158,7 @@ in
       { command = [ "waybar" ]; }
       { command = [ "mako" ]; }
       { command = [ "swww-daemon" ]; }
-      { command = [ "sh" "-c" "sleep 0.5 && swww img /home/andrew/wallpaper.jpg" ]; }
+      { command = [ "sh" "-c" "sleep 0.5 && ${wallpaper-daemon}" ]; }
       { command = [ "sh" "-c" "wl-paste --watch cliphist store" ]; }
     ];
 
@@ -127,6 +209,7 @@ in
       "Mod+Return".action = spawn "ghostty";
       "Mod+T".action = spawn "ghostty";
       "Mod+D".action = spawn "fuzzel";
+      "Mod+Space".action = spawn "fuzzel";
       "Mod+Q".action = close-window;
       "Mod+Shift+E".action = quit;
 
@@ -135,12 +218,20 @@ in
       "Mod+L".action = focus-column-right;
       "Mod+J".action = focus-window-down;
       "Mod+K".action = focus-window-up;
+      "Mod+Left".action = focus-column-left;
+      "Mod+Right".action = focus-column-right;
+      "Mod+Down".action = focus-window-down;
+      "Mod+Up".action = focus-window-up;
 
       # ── Move ────────────────────────────────────
       "Mod+Shift+H".action = move-column-left;
       "Mod+Shift+L".action = move-column-right;
       "Mod+Shift+J".action = move-window-down;
       "Mod+Shift+K".action = move-window-up;
+      "Mod+Shift+Left".action = move-column-left;
+      "Mod+Shift+Right".action = move-column-right;
+      "Mod+Shift+Down".action = move-window-down;
+      "Mod+Shift+Up".action = move-window-up;
 
       # ── Workspaces ─────────────────────────────
       "Mod+1".action.focus-workspace = 1;
@@ -199,7 +290,7 @@ in
     style = ''
       * {
         font-family: monospace;
-        font-size: 13px;
+        font-size: 15px;
         border: none;
         border-radius: 0;
         min-height: 0;
@@ -208,9 +299,18 @@ in
         background: #1a1a24;
         color: #c0c0d0;
       }
+      #custom-launcher {
+        font-size: 18px;
+        padding: 0 12px 0 10px;
+        color: #60b8b8;
+      }
+      #custom-launcher:hover {
+        color: #80d8d8;
+      }
       #workspaces button {
-        padding: 0 6px;
+        padding: 0 8px;
         color: #606070;
+        font-size: 14px;
         border-bottom: 2px solid transparent;
         border-radius: 0;
       }
@@ -218,16 +318,21 @@ in
         color: #60b8b8;
         border-bottom: 2px solid #60b8b8;
       }
-      #clock, #battery, #network, #pulseaudio, #bluetooth {
-        padding: 0 8px;
+      #clock {
+        font-size: 15px;
+        padding: 0 10px;
+      }
+      #battery, #network, #pulseaudio, #bluetooth {
+        font-size: 16px;
+        padding: 0 10px;
       }
     '';
     settings = {
       mainBar = {
         layer = "top";
         position = "top";
-        height = 28;
-        modules-left = [ "niri/workspaces" ];
+        height = 32;
+        modules-left = [ "custom/launcher" "niri/workspaces" ];
         modules-center = [ "clock" ];
         modules-right = [
           "network"
@@ -235,6 +340,12 @@ in
           "pulseaudio"
           "battery"
         ];
+
+        "custom/launcher" = {
+          format = "  ";
+          on-click = "fuzzel";
+          tooltip = false;
+        };
 
         clock = {
           format = "{:%H:%M}";
@@ -271,16 +382,25 @@ in
   };
 
   # ── Fuzzel launcher ───────────────────────────────────
+  # Colors and fonts are managed by Stylix
   programs.fuzzel = {
     enable = true;
     settings = {
       main = {
         terminal = "ghostty";
         layer = "overlay";
-        width = 60;
+        width = 50;
+        lines = 12;
+        horizontal-pad = 20;
+        vertical-pad = 16;
+        inner-pad = 8;
+        line-height = 28;
+        letter-spacing = 0;
+        prompt = "\"> \"";
       };
       border = {
-        width = 1;
+        width = 2;
+        radius = 0;
       };
     };
   };

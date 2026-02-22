@@ -103,10 +103,10 @@
         name = "JetBrains Mono";
       };
       sizes = {
-        applications = 10;
-        desktop = 10;
-        popups = 10;
-        terminal = 11;
+        applications = 11;
+        desktop = 11;
+        popups = 14;
+        terminal = 12;
       };
     };
 

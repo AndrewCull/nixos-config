@@ -36,13 +36,13 @@
       categories = [ "Office" "Calendar" ];
     };
 
-    # add more as needed:
-    # slack = {
-    #   name = "Slack";
-    #   exec = "chromium --app=https://app.slack.com";
-    #   icon = "slack";
-    #   type = "Application";
-    # };
+    claude = {
+      name = "Claude";
+      exec = "chromium --app=https://claude.ai";
+      icon = "web-browser";
+      type = "Application";
+      categories = [ "Network" "Utility" ];
+    };
   };
 
   # ── Dev tools ─────────────────────────────────────────
@@ -65,6 +65,7 @@
     ssh-copy-id
 
     # media / misc
+    spotify     # music
     mpv         # video
     imv         # image viewer for wayland
     zathura     # pdf viewer, minimal
