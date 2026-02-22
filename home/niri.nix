@@ -83,6 +83,33 @@ let
     done < <(niri msg event-stream)
   '';
 
+  power-menu = pkgs.writeShellScript "power-menu" ''
+    set -euo pipefail
+
+    FUZZEL="${pkgs.fuzzel}/bin/fuzzel"
+    SWAYLOCK="${pkgs.swaylock-effects}/bin/swaylock"
+
+    show_power_profiles() {
+      current=$(powerprofilesctl get)
+      choice=$(printf "performance\nbalanced\npower-saver" \
+        | $FUZZEL -d -p "Profile [$current] > ")
+      [ -n "$choice" ] && powerprofilesctl set "$choice"
+    }
+
+    choice=$(printf \
+      "Lock\nSuspend\nPower Profile\nLogout\nReboot\nShutdown" \
+      | $FUZZEL -d -p "Power > ")
+
+    case "$choice" in
+      Lock)          $SWAYLOCK -f --clock --effect-blur 7x5 --effect-vignette 0.5:0.5 --fade-in 0.2 ;;
+      Suspend)       systemctl suspend ;;
+      "Power Profile") show_power_profiles ;;
+      Logout)        niri msg action quit --skip-confirmation ;;
+      Reboot)        systemctl reboot ;;
+      Shutdown)      systemctl poweroff ;;
+    esac
+  '';
+
   inherit (config.lib.niri.actions)
     spawn
     close-window
@@ -145,6 +172,10 @@ in
 
     # file manager (tui)
     yazi
+
+    # network/bluetooth TUIs
+    impala       # wifi manager
+    bluetui      # bluetooth manager
 
     # misc wayland utils
     wl-screenrec # screen recording
@@ -281,6 +312,8 @@ in
 
       # ── Power ───────────────────────────────────
       "Mod+Shift+P".action = power-off-monitors;
+      "XF86PowerOff".action = spawn "sh" "-c" "${power-menu}";
+      "Mod+Escape".action = spawn "sh" "-c" "${power-menu}";
     };
   };
 
@@ -322,9 +355,15 @@ in
         font-size: 15px;
         padding: 0 10px;
       }
-      #battery, #network, #pulseaudio, #bluetooth {
+      #battery, #network, #pulseaudio, #bluetooth, #custom-tailscale {
         font-size: 16px;
         padding: 0 10px;
+      }
+      #custom-tailscale.connected {
+        color: #60b8b8;
+      }
+      #custom-tailscale.disconnected {
+        color: #606070;
       }
     '';
     settings = {
@@ -335,6 +374,7 @@ in
         modules-left = [ "custom/launcher" "niri/workspaces" ];
         modules-center = [ "clock" ];
         modules-right = [
+          "custom/tailscale"
           "network"
           "bluetooth"
           "pulseaudio"
@@ -359,11 +399,33 @@ in
           format-charging = "󰂄 {capacity}%";
         };
 
+        "custom/tailscale" = {
+          exec = pkgs.writeShellScript "waybar-tailscale" ''
+            if ! tailscale status >/dev/null 2>&1; then
+              echo '{"text": "󰖂", "class": "disconnected", "tooltip": "Tailscale: stopped"}'
+            else
+              ip=$(tailscale ip -4 2>/dev/null || echo "no ip")
+              hostname=$(tailscale status --json 2>/dev/null | ${pkgs.jq}/bin/jq -r '.Self.DNSName // empty' | sed 's/\.$//')
+              echo "{\"text\": \"󰖂\", \"class\": \"connected\", \"tooltip\": \"Tailscale: $hostname\\n$ip\"}"
+            fi
+          '';
+          return-type = "json";
+          interval = 10;
+          on-click = pkgs.writeShellScript "tailscale-toggle" ''
+            if tailscale status >/dev/null 2>&1; then
+              sudo tailscale down
+            else
+              sudo tailscale up
+            fi
+          '';
+        };
+
         network = {
           format-wifi = "󰤨 {signalStrength}%";
           format-ethernet = "󰈀";
           format-disconnected = "󰤭";
           tooltip-format = "{ifname}: {ipaddr}";
+          on-click = "ghostty -e impala";
         };
 
         pulseaudio = {
@@ -376,6 +438,7 @@ in
           format = "󰂯";
           format-connected = "󰂱";
           format-disabled = "";
+          on-click = "rfkill unblock bluetooth; ghostty -e bluetui";
         };
       };
     };
