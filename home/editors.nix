@@ -21,7 +21,7 @@
 
       # formatters / linters
       stylua
-      nixfmt-rfc-style
+      nixfmt
       prettierd
       eslint_d
 

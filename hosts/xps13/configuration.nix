@@ -19,9 +19,9 @@
   services.blueman.enable = true;
 
   # ── Lid/suspend behavior ──────────────────────────────
-  services.logind = {
-    lidSwitch = "suspend";
-    lidSwitchExternalPower = "lock";
+  services.logind.settings.Login = {
+    HandleLidSwitch = "suspend";
+    HandleLidSwitchExternalPower = "lock";
   };
 
   # ── XPS 13 specific notes ─────────────────────────────

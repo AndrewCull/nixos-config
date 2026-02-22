@@ -26,7 +26,7 @@
       dcl = "docker compose logs -f";
     };
 
-    initExtra = ''
+    initContent = ''
       # direnv hook
       eval "$(direnv hook zsh)"
     '';
@@ -84,9 +84,9 @@
   # ── Git ───────────────────────────────────────────────
   programs.git = {
     enable = true;
-    userName = "Andrew"; # update with your full name
-    userEmail = ""; # update with your email
-    extraConfig = {
+    settings = {
+      user.name = "Andrew"; # update with your full name
+      user.email = ""; # update with your email
       init.defaultBranch = "main";
       pull.rebase = true;
       push.autoSetupRemote = true;
