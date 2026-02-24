@@ -83,6 +83,36 @@ let
     done < <(niri msg event-stream)
   '';
 
+  show-keybinds = pkgs.writeShellScript "show-keybinds" ''
+    set -euo pipefail
+    cat <<KEYS | ${pkgs.fuzzel}/bin/fuzzel -d -p "Keys > " --width 60 >/dev/null
+Mod+Return         Terminal
+Mod+D / Mod+Space  Launcher
+Mod+Q              Close window
+Mod+Shift+E        Quit niri
+Mod+H/L            Focus left/right
+Mod+J/K            Focus down/up
+Mod+Shift+H/L      Move column left/right
+Mod+Shift+J/K      Move window down/up
+Mod+1-5            Focus workspace
+Mod+Shift+1-5      Move to workspace
+Mod+Tab            Previous workspace
+Mod+F              Maximize column
+Mod+Shift+F        Fullscreen
+Mod+Minus/Equal    Resize column
+Mod+V              Toggle floating
+Mod+[/]            Consume/expel window
+Mod+Shift+S        Screenshot (region)
+Print              Screenshot (full)
+Mod+,/.            Focus monitor left/right
+Mod+Shift+,/.      Move to monitor left/right
+Mod+Shift+C        Clipboard history
+Mod+Shift+P        Power off monitors
+Mod+Escape         Power menu
+Mod+Shift+/        This help
+KEYS
+  '';
+
   power-menu = pkgs.writeShellScript "power-menu" ''
     set -euo pipefail
 
@@ -314,6 +344,9 @@ in
       "Mod+Shift+P".action = power-off-monitors;
       "XF86PowerOff".action = spawn "sh" "-c" "${power-menu}";
       "Mod+Escape".action = spawn "sh" "-c" "${power-menu}";
+
+      # ── Help ───────────────────────────────────
+      "Mod+Shift+Slash".action = spawn "sh" "-c" "${show-keybinds}";
     };
   };
 
