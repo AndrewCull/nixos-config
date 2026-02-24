@@ -22,9 +22,14 @@
     ghostty = {
       url = "github:ghostty-org/ghostty";
     };
+
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, niri-flake, stylix, ghostty, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, niri-flake, stylix, ghostty, agenix, ... }@inputs:
   let
     system = "x86_64-linux";
 
@@ -35,6 +40,7 @@
 
       niri-flake.nixosModules.niri
       stylix.nixosModules.stylix
+      agenix.nixosModules.default
 
       home-manager.nixosModules.home-manager
       {
@@ -42,6 +48,9 @@
         home-manager.useUserPackages = true;
         home-manager.extraSpecialArgs = { inherit inputs; };
         home-manager.users.andrew = import ./home/default.nix;
+        home-manager.sharedModules = [
+          agenix.homeManagerModules.default
+        ];
       }
     ];
   in {

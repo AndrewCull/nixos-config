@@ -48,10 +48,20 @@
     fd
     btop
     tree
+    inputs.agenix.packages.${pkgs.system}.default
   ];
 
   # ── Zsh ───────────────────────────────────────────────
   programs.zsh.enable = true;
+
+  # ── SSH daemon ───────────────────────────────────────
+  services.openssh = {
+    enable = true;
+    settings = {
+      PasswordAuthentication = false;
+      PermitRootLogin = "no";
+    };
+  };
 
   # ── Security ──────────────────────────────────────────
   security.polkit.enable = true;
