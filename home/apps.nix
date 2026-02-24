@@ -58,8 +58,10 @@
     just        # command runner (modern make)
     watchexec   # file watcher
     dive        # docker image explorer
-
-    # networking / ops
+    
+    pkgs.mcp-nixos
+    claude-code
+   # networking / ops
     tailscale
     openssl
     ssh-copy-id
