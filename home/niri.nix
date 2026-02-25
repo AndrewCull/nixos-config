@@ -430,6 +430,7 @@ in
           format = "{icon} {capacity}%";
           format-icons = [ "󰂎" "󰁺" "󰁻" "󰁼" "󰁽" "󰁾" "󰁿" "󰂀" "󰂁" "󰂂" "󰁹" ];
           format-charging = "󰂄 {capacity}%";
+          on-click = "${power-menu}";
         };
 
         "custom/tailscale" = {
@@ -458,7 +459,7 @@ in
           format-ethernet = "󰈀";
           format-disconnected = "󰤭";
           tooltip-format = "{ifname}: {ipaddr}";
-          on-click = "ghostty -e impala";
+          on-click = "ghostty -e nmtui";
         };
 
         pulseaudio = {
@@ -522,7 +523,7 @@ in
       }
       {
         timeout = 300;
-        command = "${pkgs.swaylock-effects}/bin/swaylock -f --clock --effect-blur 7x5 --effect-vignette 0.5:0.5 --fade-in 0.2";
+        command = "${pkgs.swaylock-effects}/bin/swaylock -f --clock --fade-in 0.2 --color 121218 --indicator-radius 100 --indicator-thickness 7 --ring-color 2a2a35 --key-hl-color 60b8b8 --text-color c8c8d0 --line-color 00000000 --inside-color 1a1a22 --separator-color 00000000";
       }
       {
         timeout = 600;
@@ -530,7 +531,7 @@ in
       }
     ];
     events = {
-      before-sleep = "${pkgs.swaylock-effects}/bin/swaylock -f --clock --effect-blur 7x5 --effect-vignette 0.5:0.5 --fade-in 0.2";
+      before-sleep = "${pkgs.swaylock-effects}/bin/swaylock -f --clock --fade-in 0.2 --color 121218 --indicator-radius 100 --indicator-thickness 7 --ring-color 2a2a35 --key-hl-color 60b8b8 --text-color c8c8d0 --line-color 00000000 --inside-color 1a1a22 --separator-color 00000000";
     };
   };
 }
