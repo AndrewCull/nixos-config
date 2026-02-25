@@ -113,6 +113,33 @@ Mod+Shift+/        This help
 KEYS
   '';
 
+  wallpaper-picker = pkgs.writeShellScript "wallpaper-picker" ''
+    set -euo pipefail
+
+    WALLS="${wallpapers}"
+    FOLDERS="nord natura abstract minimal industrial"
+
+    # Collect all wallpaper paths
+    ALL=()
+    for f in $FOLDERS; do
+      for img in "$WALLS/$f"/*; do
+        [ -f "$img" ] && ALL+=("$img")
+      done
+    done
+
+    # Build fuzzel list: "folder/filename"
+    ENTRIES=""
+    for img in "''${ALL[@]}"; do
+      label=$(echo "$img" | sed "s|$WALLS/||")
+      ENTRIES+="$label\n"
+    done
+
+    choice=$(printf "$ENTRIES" | ${pkgs.fuzzel}/bin/fuzzel -d -p "Wallpaper > " --width 50)
+    [ -z "$choice" ] && exit 0
+
+    ${pkgs.swww}/bin/swww img "$WALLS/$choice" --transition-type fade --transition-duration 0.7
+  '';
+
   power-menu = pkgs.writeShellScript "power-menu" ''
     set -euo pipefail
 
@@ -271,6 +298,7 @@ in
       "Mod+T".action = spawn "ghostty";
       "Mod+D".action = spawn "fuzzel";
       "Mod+Space".action = spawn "fuzzel";
+      "Mod+Shift+W".action = spawn "${wallpaper-picker}";
       "Mod+Q".action = close-window;
       "Mod+Shift+E".action = quit;
 
