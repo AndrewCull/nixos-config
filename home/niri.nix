@@ -108,36 +108,10 @@ Mod+,/.            Focus monitor left/right
 Mod+Shift+,/.      Move to monitor left/right
 Mod+Shift+C        Clipboard history
 Mod+Shift+P        Power off monitors
+Mod+Shift+W        Wallpaper manager
 Mod+Escape         Power menu
 Mod+Shift+/        This help
 KEYS
-  '';
-
-  wallpaper-picker = pkgs.writeShellScript "wallpaper-picker" ''
-    set -euo pipefail
-
-    WALLS="${wallpapers}"
-    FOLDERS="nord natura abstract minimal industrial"
-
-    # Collect all wallpaper paths
-    ALL=()
-    for f in $FOLDERS; do
-      for img in "$WALLS/$f"/*; do
-        [ -f "$img" ] && ALL+=("$img")
-      done
-    done
-
-    # Build fuzzel list: "folder/filename"
-    ENTRIES=""
-    for img in "''${ALL[@]}"; do
-      label=$(echo "$img" | sed "s|$WALLS/||")
-      ENTRIES+="$label\n"
-    done
-
-    choice=$(printf "$ENTRIES" | ${pkgs.fuzzel}/bin/fuzzel -d -p "Wallpaper > " --width 50)
-    [ -z "$choice" ] && exit 0
-
-    ${pkgs.swww}/bin/swww img "$WALLS/$choice" --transition-type fade --transition-duration 0.7
   '';
 
   power-menu = pkgs.writeShellScript "power-menu" ''
@@ -200,8 +174,9 @@ in
     # bar
     waybar
 
-    # launcher
-    fuzzel
+    # launchers
+    fuzzel       # kept for dmenu-style scripts (clipboard, power, keybinds)
+    anyrun       # primary app launcher
 
     # notifications
     mako
@@ -214,6 +189,7 @@ in
 
     # wallpaper
     swww
+    waypaper     # GUI wallpaper manager (uses swww backend)
 
     # screenshot
     grim
@@ -227,6 +203,9 @@ in
     brightnessctl
     pamixer
 
+    # media
+    playerctl
+
     # file manager (tui)
     yazi
 
@@ -238,6 +217,81 @@ in
     wl-screenrec # screen recording
     wlr-randr    # display config
   ];
+
+  # ── Anyrun launcher ────────────────────────────────────
+  xdg.configFile."anyrun/config.ron".text = ''
+    Config(
+      x: Fraction(0.5),
+      y: Fraction(0.3),
+      width: Fraction(0.3),
+      height: Absolute(0),
+      hide_icons: false,
+      ignore_exclusive_zones: false,
+      layer: Overlay,
+      hide_plugin_info: false,
+      close_on_click: false,
+      show_results_immediately: true,
+      max_entries: Some(10),
+      plugins: [
+        "libapplications.so",
+        "libshell.so",
+        "libsymbols.so",
+      ],
+    )
+  '';
+
+  xdg.configFile."anyrun/style.css".text = ''
+    * {
+      transition: 200ms ease;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 14px;
+    }
+
+    #window {
+      background: transparent;
+    }
+
+    #main {
+      background: #121218;
+      border: 1px solid #2a2a35;
+      border-radius: 0px;
+      padding: 8px;
+    }
+
+    #entry {
+      background: #1a1a24;
+      border: 1px solid #2a2a35;
+      border-radius: 0px;
+      padding: 8px 12px;
+      color: #c8c8d0;
+      min-height: 28px;
+    }
+
+    #entry:focus {
+      border-color: #60b8b8;
+    }
+
+    #plugin {
+      background: transparent;
+      padding: 4px 0px;
+    }
+
+    #match {
+      background: transparent;
+      padding: 4px 8px;
+      border-radius: 0px;
+      color: #c8c8d0;
+    }
+
+    #match:selected {
+      background: #2a2a35;
+      color: #60b8b8;
+    }
+
+    #match:hover {
+      background: #1e1e28;
+    }
+  '';
 
   # ── Niri settings ────────────────────────────────────
   programs.niri.settings = {
@@ -296,9 +350,9 @@ in
       # ── Launch ──────────────────────────────────
       "Mod+Return".action = spawn "ghostty";
       "Mod+T".action = spawn "ghostty";
-      "Mod+D".action = spawn "fuzzel";
-      "Mod+Space".action = spawn "fuzzel";
-      "Mod+Shift+W".action = spawn "${wallpaper-picker}";
+      "Mod+D".action = spawn "anyrun";
+      "Mod+Space".action = spawn "anyrun";
+      "Mod+Shift+W".action = spawn "waypaper";
       "Mod+Q".action = close-window;
       "Mod+Shift+E".action = quit;
 
@@ -365,6 +419,9 @@ in
       "XF86AudioRaiseVolume".action = spawn "pamixer" "-i" "5";
       "XF86AudioLowerVolume".action = spawn "pamixer" "-d" "5";
       "XF86AudioMute".action = spawn "pamixer" "-t";
+      "XF86AudioPlay".action = spawn "playerctl" "play-pause";
+      "XF86AudioNext".action = spawn "playerctl" "next";
+      "XF86AudioPrev".action = spawn "playerctl" "previous";
       "XF86MonBrightnessUp".action = spawn "brightnessctl" "set" "+5%";
       "XF86MonBrightnessDown".action = spawn "brightnessctl" "set" "5%-";
 
@@ -383,24 +440,36 @@ in
     enable = true;
     style = ''
       * {
-        font-family: monospace;
-        font-size: 15px;
+        font-family: "JetBrainsMono Nerd Font", "JetBrains Mono", monospace;
+        font-size: 14px;
         border: none;
         border-radius: 0;
         min-height: 0;
       }
+
       window#waybar {
-        background: #1a1a24;
-        color: #c0c0d0;
+        background: #121218;
+        border-bottom: 1px solid #2a2a35;
+        color: #c8c8d0;
       }
+
+      tooltip {
+        background: #1a1a24;
+        border: 1px solid #2a2a35;
+        border-radius: 0;
+        color: #c8c8d0;
+      }
+
+      /* ── Left ─────────────────────────────── */
       #custom-launcher {
         font-size: 18px;
-        padding: 0 12px 0 10px;
+        padding: 0 14px 0 12px;
         color: #60b8b8;
       }
       #custom-launcher:hover {
         color: #80d8d8;
       }
+
       #workspaces button {
         padding: 0 8px;
         color: #606070;
@@ -408,16 +477,53 @@ in
         border-bottom: 2px solid transparent;
         border-radius: 0;
       }
+      #workspaces button:hover {
+        background: #1e1e28;
+        color: #c8c8d0;
+      }
       #workspaces button.active {
         color: #60b8b8;
         border-bottom: 2px solid #60b8b8;
       }
+
+      #window {
+        color: #6a6a80;
+        font-style: italic;
+        padding: 0 12px;
+      }
+
+      /* ── Center ───────────────────────────── */
       #clock {
-        font-size: 15px;
+        font-size: 14px;
         padding: 0 10px;
       }
-      #battery, #network, #pulseaudio, #bluetooth, #custom-tailscale {
-        font-size: 16px;
+
+      /* ── Right ────────────────────────────── */
+      #mpris {
+        color: #70c890;
+        padding: 0 10px;
+        font-size: 13px;
+      }
+
+      #idle_inhibitor {
+        padding: 0 10px;
+        color: #606070;
+      }
+      #idle_inhibitor.activated {
+        color: #c8b870;
+      }
+
+      #cpu, #memory {
+        color: #6a6a80;
+        padding: 0 8px;
+        font-size: 13px;
+      }
+
+      #backlight {
+        padding: 0 10px;
+      }
+
+      #custom-tailscale {
         padding: 0 10px;
       }
       #custom-tailscale.connected {
@@ -426,25 +532,73 @@ in
       #custom-tailscale.disconnected {
         color: #606070;
       }
+
+      #network, #bluetooth, #pulseaudio {
+        font-size: 16px;
+        padding: 0 10px;
+      }
+
+      #battery {
+        font-size: 16px;
+        padding: 0 10px;
+      }
+      #battery.warning:not(.charging) {
+        color: #c8a060;
+      }
+      #battery.critical:not(.charging) {
+        color: #c06060;
+      }
+      #battery.charging {
+        color: #70c890;
+      }
+
+      #tray {
+        padding: 0 8px;
+      }
+      #tray > .passive {
+        -gtk-icon-effect: dim;
+      }
+
+      #custom-power {
+        color: #c06060;
+        font-size: 16px;
+        padding: 0 12px 0 8px;
+      }
+      #custom-power:hover {
+        color: #e07070;
+      }
     '';
     settings = {
       mainBar = {
         layer = "top";
         position = "top";
         height = 32;
-        modules-left = [ "custom/launcher" "niri/workspaces" ];
+        modules-left = [ "custom/launcher" "niri/workspaces" "niri/window" ];
         modules-center = [ "clock" ];
         modules-right = [
+          "mpris"
+          "idle_inhibitor"
+          "cpu"
+          "memory"
+          "backlight"
           "custom/tailscale"
           "network"
           "bluetooth"
           "pulseaudio"
           "battery"
+          "tray"
+          "custom/power"
         ];
 
         "custom/launcher" = {
           format = "  ";
-          on-click = "fuzzel";
+          on-click = "anyrun";
+          tooltip = false;
+        };
+
+        "niri/window" = {
+          format = "{}";
+          max-length = 40;
           tooltip = false;
         };
 
@@ -454,10 +608,55 @@ in
           tooltip-format = "{:%Y-%m-%d %H:%M}";
         };
 
+        mpris = {
+          format = "{player_icon} {title}";
+          format-paused = "{player_icon} <i>{title}</i>";
+          max-length = 30;
+          player-icons = {
+            default = "▶";
+            spotify = "";
+            firefox = "󰈹";
+          };
+          tooltip-format = "{player}: {artist} — {title}";
+        };
+
+        idle_inhibitor = {
+          format = "{icon}";
+          format-icons = {
+            activated = "󰅶";
+            deactivated = "󰾪";
+          };
+          tooltip-format-activated = "Idle inhibitor: on";
+          tooltip-format-deactivated = "Idle inhibitor: off";
+        };
+
+        cpu = {
+          format = "󰘚 {usage}%";
+          interval = 5;
+          tooltip-format = "CPU: {usage}%";
+        };
+
+        memory = {
+          format = "󰍛 {percentage}%";
+          interval = 5;
+          tooltip-format = "RAM: {used:0.1f}G / {total:0.1f}G";
+        };
+
+        backlight = {
+          format = "{icon} {percent}%";
+          format-icons = [ "󰃞" "󰃟" "󰃠" ];
+          tooltip-format = "Brightness: {percent}%";
+        };
+
         battery = {
           format = "{icon} {capacity}%";
           format-icons = [ "󰂎" "󰁺" "󰁻" "󰁼" "󰁽" "󰁾" "󰁿" "󰂀" "󰂁" "󰂂" "󰁹" ];
           format-charging = "󰂄 {capacity}%";
+          states = {
+            warning = 30;
+            critical = 15;
+          };
+          tooltip-format = "{timeTo}";
           on-click = "${power-menu}";
         };
 
@@ -494,19 +693,33 @@ in
           format = "{icon} {volume}%";
           format-icons.default = [ "󰕿" "󰖀" "󰕾" ];
           format-muted = "󰝟";
+          tooltip-format = "{desc}: {volume}%";
         };
 
         bluetooth = {
           format = "󰂯";
           format-connected = "󰂱";
           format-disabled = "";
+          tooltip-format-connected = "{device_alias}";
           on-click = "rfkill unblock bluetooth; ghostty -e bluetui";
+        };
+
+        tray = {
+          icon-size = 16;
+          spacing = 8;
+        };
+
+        "custom/power" = {
+          format = "⏻";
+          on-click = "${power-menu}";
+          tooltip = false;
         };
       };
     };
   };
 
   # ── Fuzzel launcher ───────────────────────────────────
+  # Kept for dmenu-style scripts (clipboard, power menu, keybind help)
   # Colors and fonts are managed by Stylix
   programs.fuzzel = {
     enable = true;
