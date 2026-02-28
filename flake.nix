@@ -55,7 +55,7 @@
         home-manager.users.andrew = import ./home/default.nix;
         home-manager.sharedModules = [
           agenix.homeManagerModules.default
-          noctalia.homeManagerModules.default
+          noctalia.homeModules.default
         ];
       }
     ];
