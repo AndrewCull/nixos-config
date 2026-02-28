@@ -8,9 +8,6 @@
   # ── Niri compositor ───────────────────────────────────
   programs.niri.enable = true;
 
-  # ── Noctalia shell ──────────────────────────────────
-  services.noctalia-shell.enable = true;
-
   # ── Supporting Wayland services ───────────────────────
   services.greetd = {
     enable = true;
