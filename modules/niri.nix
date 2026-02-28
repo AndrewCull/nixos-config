@@ -1,15 +1,22 @@
 { config, pkgs, inputs, ... }:
 
 {
+  imports = [
+    inputs.noctalia.nixosModules.default
+  ];
+
   # ── Niri compositor ───────────────────────────────────
   programs.niri.enable = true;
+
+  # ── Noctalia shell ──────────────────────────────────
+  services.noctalia-shell.enable = true;
 
   # ── Supporting Wayland services ───────────────────────
   services.greetd = {
     enable = true;
     settings = {
       default_session = {
-        command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd niri-session";
+        command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd niri-session --sessions ${config.services.displayManager.sessionData.desktops}/share";
         user = "greeter";
       };
     };

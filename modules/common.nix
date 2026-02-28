@@ -78,6 +78,10 @@
   hardware.enableAllFirmware = true;
   services.fwupd.enable = true;
 
+  # ── Power (required by noctalia power widgets) ──────
+  services.upower.enable = true;
+  services.power-profiles-daemon.enable = true;
+
   # ── Stylix (global theming) ─────────────────────────
   stylix = {
     enable = true;

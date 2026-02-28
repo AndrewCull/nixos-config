@@ -3,6 +3,7 @@
 {
   imports = [
     ./niri.nix
+    ./noctalia.nix
     ./shell.nix
     ./editors.nix
     ./apps.nix

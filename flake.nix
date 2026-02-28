@@ -27,9 +27,14 @@
       url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    noctalia = {
+      url = "github:noctalia-dev/noctalia-shell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, niri-flake, stylix, ghostty, agenix, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, niri-flake, stylix, ghostty, agenix, noctalia, ... }@inputs:
   let
     system = "x86_64-linux";
 
@@ -50,6 +55,7 @@
         home-manager.users.andrew = import ./home/default.nix;
         home-manager.sharedModules = [
           agenix.homeManagerModules.default
+          noctalia.homeManagerModules.default
         ];
       }
     ];
