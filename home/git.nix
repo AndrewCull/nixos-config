@@ -3,9 +3,9 @@
 {
   programs.git = {
     enable = true;
-    userName = "Andrew";
-    userEmail = ""; # fill in your email
-    extraConfig = {
+    settings = {
+      user.name = "Andrew";
+      user.email = "andrew@agemalabs.com";
       init.defaultBranch = "main";
       pull.rebase = true;
       push.autoSetupRemote = true;

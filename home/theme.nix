@@ -19,10 +19,10 @@
 
   home.packages = with pkgs; [
     nerd-fonts.fira-code
+    nerd-fonts.jetbrains-mono
     libnotify
     glib
     brightnessctl
-    wl-clipboard
     networkmanagerapplet
     pwvucontrol   # pipewire audio control
   ];

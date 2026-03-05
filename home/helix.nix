@@ -6,7 +6,6 @@
     defaultEditor = true;
 
     settings = {
-      theme = "gruvbox_dark_hard";
 
       editor = {
         line-number = "relative";
@@ -73,7 +72,7 @@
       tailwindcss-language-server
 
       # formatters
-      nixfmt-rfc-style
+      nixfmt
       prettierd
     ];
   };

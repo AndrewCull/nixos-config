@@ -24,7 +24,7 @@ layout {
         proportion 0.66667
     }
 
-    default-column-width {}
+    default-column-width { proportion 1.0; }
 
     focus-ring {
         width 3
@@ -39,6 +39,18 @@ layout {
     struts {}
 }
 
+output "eDP-1" {
+    mode "1920x1200@60.002"
+    scale 1.25
+    position x=0 y=0
+}
+
+output "DP-2" {
+    mode "1920x1080@60.000"
+    position x=1536 y=0
+}
+
+spawn-at-startup "xwayland-satellite"
 spawn-at-startup "waybar"
 spawn-at-startup "mako"
 spawn-at-startup "swaybg" "-m" "fill" "-i" "/home/andrew/wallpaper.jpg"
@@ -46,6 +58,19 @@ spawn-at-startup "swaybg" "-m" "fill" "-i" "/home/andrew/wallpaper.jpg"
 prefer-no-csd
 
 screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+
+// ── Window rules ──────────────────────────────────
+window-rule {
+    match app-id=r#"ghostty"#
+    default-column-width { proportion 0.5; }
+}
+
+window-rule {
+    match app-id=r#"chromium-browser"#
+    match app-id=r#"google-chrome"#
+    match app-id=r#"firefox"#
+    default-column-width { proportion 1.0; }
+}
 
 cursor {
     hide-when-typing
@@ -70,7 +95,7 @@ binds {
     // ── Launch ──────────────────────────────────────
     Mod+Return { spawn "ghostty"; }
     Mod+T      { spawn "ghostty"; }
-    Mod+D      { spawn "fuzzel"; }
+    Mod+D      { spawn "rofi" "-show" "drun"; }
     Mod+Q      { close-window; }
     Mod+Escape { spawn "power-menu"; }
 
@@ -78,6 +103,7 @@ binds {
     XF86AudioRaiseVolume allow-when-locked=true { spawn "pamixer" "-i" "5"; }
     XF86AudioLowerVolume allow-when-locked=true { spawn "pamixer" "-d" "5"; }
     XF86AudioMute        allow-when-locked=true { spawn "pamixer" "-t"; }
+    XF86AudioMicMute     allow-when-locked=true { spawn "pamixer" "--default-source" "-t"; }
     XF86MonBrightnessUp   { spawn "brightnessctl" "set" "+5%"; }
     XF86MonBrightnessDown { spawn "brightnessctl" "set" "5%-"; }
 
@@ -169,10 +195,21 @@ binds {
     Mod+Shift+Minus { set-window-height "-10%"; }
     Mod+Shift+Equal { set-window-height "+10%"; }
 
+    // ── Floating ───────────────────────────────────
+    Mod+V       { toggle-window-floating; }
+    Mod+Shift+V { switch-focus-between-floating-and-tiling; }
+
+    // ── Overview ───────────────────────────────────
+    Mod+Tab { toggle-overview; }
+
     // ── Screenshot ──────────────────────────────────
     Print      { screenshot; }
     Ctrl+Print { screenshot-screen; }
     Alt+Print  { screenshot-window; }
+
+    // ── Wallpaper ───────────────────────────────────
+    Mod+Shift+W { spawn "wallpaper-pick"; }
+    // Mod+Ctrl+Right { spawn "wallpaper-next"; }
 
     // ── Session ─────────────────────────────────────
     Mod+Shift+E { quit; }

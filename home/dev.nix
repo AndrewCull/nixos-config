@@ -29,6 +29,7 @@
   programs.yazi = {
     enable = true;
     enableFishIntegration = true;
+    shellWrapperName = "y";
   };
 
   # ── Packages ────────────────────────────────────────
@@ -46,5 +47,7 @@
     dust            # disk usage
     arp-scan
     dig
+    btop
+    tmux
   ];
 }

@@ -11,6 +11,7 @@
   };
 
   programs.firefox.enable = true;
+  stylix.targets.firefox.profileNames = [ "default" ];
 
   # ── Web App PWAs ────────────────────────────────────
   xdg.desktopEntries = {
@@ -73,6 +74,12 @@
     # gui apps
     nautilus    # file manager
     zed-editor
+    warp-terminal
+    teams-for-linux
+    zoom-us
+    bitwarden-desktop
+    obsidian
+    spotify
 
     # recording
     obs-studio

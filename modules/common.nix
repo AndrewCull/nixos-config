@@ -88,7 +88,7 @@
       sizes = {
         applications = 10;
         desktop = 10;
-        popups = 10;
+        popups = 16;
         terminal = 11;
       };
     };

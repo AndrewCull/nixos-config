@@ -6,8 +6,8 @@
 
     shellAliases = {
       # nix
-      rebuild = "sudo nixos-rebuild switch --flake ~/nixos-config#(hostname)";
-      update = "nix flake update ~/nixos-config";
+      rebuild = "sudo nixos-rebuild switch --flake /etc/nixos-config#(hostname)";
+      update = "nix flake update /etc/nixos-config";
 
       # git
       gs = "git status";
@@ -45,6 +45,7 @@
       set EDITOR hx
 
       fish_add_path ~/.npm-global/bin
+      fish_add_path ~/.local/bin
     '';
   };
 }

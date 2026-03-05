@@ -9,18 +9,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    niri-flake = {
-      url = "github:sodiboo/niri-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     stylix = {
       url = "github:danth/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, niri-flake, stylix, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, stylix, ... }@inputs:
   let
     system = "x86_64-linux";
 
@@ -28,7 +23,6 @@
       ./modules/common.nix
       ./modules/niri.nix
 
-      niri-flake.nixosModules.niri
       stylix.nixosModules.stylix
 
       home-manager.nixosModules.home-manager

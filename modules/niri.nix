@@ -21,6 +21,10 @@
     extraPortals = [ pkgs.xdg-desktop-portal-gnome ];
   };
 
+  # GNOME Keyring — auto-unlock on login
+  services.gnome.gnome-keyring.enable = true;
+  security.pam.services.greetd.enableGnomeKeyring = true;
+
   # Bluetooth
   hardware.bluetooth.enable = true;
   services.blueman.enable = true;
