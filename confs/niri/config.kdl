@@ -103,7 +103,7 @@ binds {
     XF86AudioRaiseVolume allow-when-locked=true { spawn "pamixer" "-i" "5"; }
     XF86AudioLowerVolume allow-when-locked=true { spawn "pamixer" "-d" "5"; }
     XF86AudioMute        allow-when-locked=true { spawn "pamixer" "-t"; }
-    XF86AudioMicMute     allow-when-locked=true { spawn "pamixer" "--default-source" "-t"; }
+    XF86AudioMicMute     allow-when-locked=true { spawn "mic-mute-toggle"; }
     XF86MonBrightnessUp   { spawn "brightnessctl" "set" "+5%"; }
     XF86MonBrightnessDown { spawn "brightnessctl" "set" "5%-"; }
 

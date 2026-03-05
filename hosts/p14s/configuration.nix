@@ -46,7 +46,7 @@
   # ── Lid/suspend behavior ──────────────────────────────
   services.logind.settings.Login = {
     HandleLidSwitch = "suspend";
-    HandleLidSwitchExternalPower = "lock";
+    HandleLidSwitchExternalPower = "suspend";
   };
 
   # -- User --

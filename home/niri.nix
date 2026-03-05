@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 let
   power-menu = pkgs.writeShellScriptBin "power-menu" ''
@@ -28,6 +28,11 @@ let
     pkill swaybg 2>/dev/null; sleep 0.1
     swaybg -m fill -i "$dir/$selected" &
     disown
+  '';
+
+  mic-mute-toggle = pkgs.writeShellScriptBin "mic-mute-toggle" ''
+    ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+    ${pkgs.alsa-utils}/bin/amixer -c1 set Capture toggle
   '';
 
   wallpaper-next = pkgs.writeShellScriptBin "wallpaper-next" ''
@@ -97,6 +102,7 @@ in
     power-menu
     wallpaper-pick
     wallpaper-next
+    mic-mute-toggle
   ];
 
   # ── Waybar ──────────────────────────────────────────
@@ -140,6 +146,7 @@ in
           format-ethernet = "󰈀";
           format-disconnected = "󰤭";
           tooltip-format = "{ifname}: {ipaddr}";
+          on-click = "ghostty -e nmtui";
         };
 
         pulseaudio = {
@@ -193,6 +200,7 @@ in
       default-timeout = 5000;
       border-size = 1;
       border-radius = 0;
+      font = lib.mkForce "Inter 10";
     };
   };
 
@@ -209,11 +217,8 @@ in
         command = "niri msg action power-off-monitors";
       }
     ];
-    events = [
-      {
-        event = "before-sleep";
-        command = "${pkgs.hyprlock}/bin/hyprlock";
-      }
-    ];
+    events = {
+      before-sleep = "${pkgs.hyprlock}/bin/hyprlock";
+    };
   };
 }
