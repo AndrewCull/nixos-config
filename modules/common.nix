@@ -65,6 +65,8 @@
 
   # ── Network browsing (Nautilus) ───────────────────────
   services.gvfs.enable = true;
+  services.samba.enable = true;
+  services.samba.openFirewall = true;
   services.avahi = {
     enable = true;
     nssmdns4 = true;
