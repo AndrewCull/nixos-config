@@ -2,7 +2,7 @@
 
 {
   # ── Browser ─────────────────────────────────────────
-  programs.chromium = {
+  programs.google-chrome = {
     enable = true;
     commandLineArgs = [
       "--ozone-platform-hint=auto"
@@ -17,7 +17,7 @@
   xdg.desktopEntries = {
     claude = {
       name = "Claude";
-      exec = "chromium --app=https://claude.ai";
+      exec = "google-chrome-stable --app=https://claude.ai";
       icon = "web-browser";
       type = "Application";
       categories = [ "Network" ];
@@ -25,7 +25,7 @@
 
     superhuman = {
       name = "Superhuman";
-      exec = "chromium --app=https://mail.superhuman.com";
+      exec = "google-chrome-stable --app=https://mail.superhuman.com";
       icon = "mail-client";
       type = "Application";
       categories = [ "Network" "Email" ];
@@ -33,7 +33,7 @@
 
     google-meet = {
       name = "Google Meet";
-      exec = "chromium --app=https://meet.google.com";
+      exec = "google-chrome-stable --app=https://meet.google.com";
       icon = "video-display";
       type = "Application";
       categories = [ "Network" "VideoConference" ];
@@ -41,7 +41,7 @@
 
     google-calendar = {
       name = "Google Calendar";
-      exec = "chromium --app=https://calendar.google.com";
+      exec = "google-chrome-stable --app=https://calendar.google.com";
       icon = "calendar";
       type = "Application";
       categories = [ "Office" "Calendar" ];

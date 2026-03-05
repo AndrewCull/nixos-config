@@ -53,7 +53,7 @@ output "DP-2" {
 spawn-at-startup "xwayland-satellite"
 spawn-at-startup "waybar"
 spawn-at-startup "mako"
-spawn-at-startup "swaybg" "-m" "fill" "-i" "/home/andrew/wallpaper.jpg"
+spawn-at-startup "wallpaper-launch"
 
 prefer-no-csd
 
@@ -90,12 +90,13 @@ animations {
 }
 
 binds {
-    Mod+Shift+Slash { show-hotkey-overlay; }
+    Mod+Shift+Slash { spawn "keybinds-cheat"; }
 
     // ── Launch ──────────────────────────────────────
     Mod+Return { spawn "ghostty"; }
     Mod+T      { spawn "ghostty"; }
     Mod+D      { spawn "rofi" "-show" "drun"; }
+    Mod+E      { spawn "ghostty" "-e" "yazi"; }
     Mod+Q      { close-window; }
     Mod+Escape { spawn "power-menu"; }
 

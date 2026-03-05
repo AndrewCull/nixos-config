@@ -63,6 +63,13 @@
     pulse.enable = true;
   };
 
+  # ── Network browsing (Nautilus) ───────────────────────
+  services.gvfs.enable = true;
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+  };
+
   # ── Firmware ──────────────────────────────────────────
   hardware.enableAllFirmware = true;
   services.fwupd.enable = true;
@@ -95,9 +102,9 @@
     };
 
     cursor = {
-      package = pkgs.bibata-cursors;
-      name = "Bibata-Modern-Classic";
-      size = 22;
+      package = pkgs.phinger-cursors;
+      name = "phinger-cursors-light";
+      size = 18;
     };
 
     opacity = {

@@ -13,6 +13,41 @@ let
     esac
   '';
 
+  keybinds-cheat = pkgs.writeShellScriptBin "keybinds-cheat" ''
+    config="$HOME/.config/niri/config.kdl"
+    section=""
+    {
+      while IFS= read -r line; do
+        # Section headers from comments
+        if [[ "$line" =~ ^[[:space:]]*//\ ──\ (.+)\ ── ]]; then
+          section="''${BASH_REMATCH[1]}"
+          continue
+        fi
+        # Skip comments, empty lines, non-bind lines
+        [[ "$line" =~ ^[[:space:]]*// ]] && continue
+        [[ -z "''${line// }" ]] && continue
+        # Match keybindings: Key { action; }
+        if [[ "$line" =~ ^[[:space:]]*([A-Za-z0-9+_]+)[[:space:]]*(allow-when-locked=true)?[[:space:]]*\{[[:space:]]*(.+)\;[[:space:]]*\} ]]; then
+          key="''${BASH_REMATCH[1]}"
+          action="''${BASH_REMATCH[3]}"
+          # Clean up action: remove spawn quotes, just show the command
+          action=$(echo "$action" | sed 's/spawn "//;s/" "/\ /g;s/"//g')
+          if [ -n "$section" ]; then
+            printf "%-28s  %s\n" "$key" "$action"
+          fi
+        fi
+      done < "$config"
+    } | rofi -dmenu -p "Keybindings" -i -no-custom -theme-str 'window {width: 50%;}'
+  '';
+
+  wallpaper-launch = pkgs.writeShellScriptBin "wallpaper-launch" ''
+    state="$HOME/.config/current-wallpaper"
+    fallback="$HOME/wallpaper.jpg"
+    wp=$(cat "$state" 2>/dev/null)
+    [ ! -f "$wp" ] && wp="$fallback"
+    [ -f "$wp" ] && exec swaybg -m fill -i "$wp"
+  '';
+
   wallpaper-pick = pkgs.writeShellScriptBin "wallpaper-pick" ''
     dir="$HOME/wallpapers"
     state="$HOME/.config/current-wallpaper"
@@ -100,6 +135,8 @@ in
 
     # scripts
     power-menu
+    keybinds-cheat
+    wallpaper-launch
     wallpaper-pick
     wallpaper-next
     mic-mute-toggle
@@ -214,7 +251,7 @@ in
       }
       {
         timeout = 600;
-        command = "niri msg action power-off-monitors";
+        command = "${pkgs.niri}/bin/niri msg action power-off-monitors";
       }
     ];
     events = {
