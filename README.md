@@ -1,51 +1,122 @@
 # NixOS Config
 
-Flake-based NixOS system configuration using nixpkgs unstable, [Niri](https://github.com/YaLTeR/niri) (scrollable tiling Wayland compositor), and [Stylix](https://github.com/danth/stylix) (Gruvbox Dark theming).
+Flake-based NixOS system configuration using nixpkgs unstable, [Niri](https://github.com/YaLTeR/niri) (scrollable tiling Wayland compositor), and [Stylix](https://github.com/danth/stylix) (Gruvbox Dark theming). Secrets managed with [sops-nix](https://github.com/Mic92/sops-nix).
 
 Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**.
 
-## What You Get
+## Desktop
 
-- **Niri** — scrollable tiling Wayland compositor with vim-style keybindings
-- **Gruvbox Dark** — consistent theming across terminal, apps, and UI via Stylix
-- **Ghostty** — GPU-accelerated terminal
-- **Helix** — modal text editor
-- **Fish** — shell with modern CLI replacements (eza, bat, zoxide, fzf, ripgrep)
-- **Waybar** — minimal status bar
-- **Rofi** — app launcher
-- **Hyprlock** — screen lock with idle management
-- **TLP** — power management tuned for ThinkPad
-- **Docker, Tailscale, Steam** — ready out of the box
+| Component | Program |
+|-----------|---------|
+| Compositor | Niri (scrollable tiling Wayland) |
+| Display Manager | greetd + tuigreet |
+| Status Bar | Waybar |
+| Launcher | Rofi |
+| Notifications | Mako |
+| Screen Lock | Hyprlock + swayidle |
+| Wallpaper | swaybg (with rofi picker) |
+| Screenshots | grim + slurp |
+| Clipboard | wl-clipboard + cliphist |
+| Theme | Gruvbox Dark Medium (via Stylix) |
+| Icons | Papirus-Dark |
+| Cursor | phinger-cursors-light |
+| Fonts | Inter (UI), FiraCode Nerd Font Mono (terminal) |
+
+## Terminal & Shell
+
+| Component | Program |
+|-----------|---------|
+| Terminal | Ghostty |
+| Shell | Fish |
+| Prompt | Starship |
+| Multiplexer | Zellij |
+| Editor | Helix |
+| File Manager | Yazi (terminal), Nautilus (GUI) |
+| Navigation | zoxide, fzf |
+
+## Development
+
+| Category | Tools |
+|----------|-------|
+| Rust | rustc, cargo, clippy, rustfmt, rust-analyzer |
+| Node.js | nodejs 22, pnpm, typescript-language-server |
+| Nix | nil (LSP), nixfmt |
+| Git | git, gh (GitHub CLI), delta (diffs), lazygit |
+| Containers | Docker, dive (image explorer) |
+| Build/Run | just, watchexec, direnv |
+| Search | ripgrep, fd, fzf |
+| Data | jq, gron, miller, csvlens |
+| Monitoring | btop, bottom, dust, tokei |
+| HTTP | httpie |
+| Formatting | prettierd |
+
+## Applications
+
+| Category | Apps |
+|----------|------|
+| Browsers | Google Chrome, Firefox |
+| Email | Superhuman (PWA) |
+| Chat | Slack, Teams, Zoom |
+| AI | Claude (PWA) |
+| Notes | Obsidian |
+| Office | LibreOffice |
+| PDF | zathura (viewer), xournalpp (annotation) |
+| Video | mpv, OBS Studio |
+| Images | imv |
+| Music | Spotify |
+| Passwords | Bitwarden |
+| Gaming | Steam + Gamescope + GameMode |
+
+## System Services
+
+| Service | Purpose |
+|---------|---------|
+| Tailscale | VPN / mesh networking |
+| PipeWire | Audio (with PulseAudio compat) |
+| TLP | Laptop power management |
+| thermald | Thermal management |
+| fprintd | Fingerprint authentication |
+| Docker | Container runtime (auto-prune) |
+| Samba + Avahi | Network file sharing / discovery |
+| CUPS | Printing |
+| fwupd | Firmware updates |
+| Blueman | Bluetooth management |
+| GNOME Keyring | Secret storage |
 
 ## Structure
 
 ```
-flake.nix                       # Entry point — wires inputs, shared modules, and hosts
+flake.nix                       # Entry point — inputs, shared modules, hosts
 modules/
   common.nix                    # Boot, networking, users, nix settings, pipewire, stylix
   niri.nix                      # Niri compositor, greetd, portals, bluetooth
+  hhkb.nix                      # HHKB keyboard layer (media/nav keys via keyd)
   docker.nix                    # Docker daemon (opt-in per host)
 home/
   default.nix                   # Auto-imports all .nix files in this directory
   fish.nix                      # Shell config and aliases
-  helix.nix                     # Editor
-  niri.nix                      # Waybar, rofi, mako, swayidle, hyprlock, wallpaper scripts
+  helix.nix                     # Editor + LSP setup
+  niri.nix                      # Waybar, rofi, mako, swayidle, hyprlock, wallpaper
   apps.nix                      # Browsers, GUI apps, PWA shortcuts
-  dev.nix                       # CLI dev tools (bat, eza, fzf, ripgrep, yazi, direnv, etc.)
+  dev.nix                       # CLI dev tools
   git.nix                       # Git config
   ghostty.nix                   # Terminal emulator
+  ssh.nix                       # SSH client config
   starship.nix                  # Prompt
-  theme.nix                     # Stylix overrides
+  theme.nix                     # Stylix overrides, icons, cursor
   zellij.nix                    # Terminal multiplexer
 hosts/
   p14s/
-    configuration.nix           # ThinkPad P14s: AMD GPU, TLP, fingerprint, lid behavior
-    hardware-configuration.nix  # Auto-generated by nixos-generate-config
+    configuration.nix           # ThinkPad P14s: AMD GPU, TLP, fingerprint, lid, gaming
+    hardware-configuration.nix  # Auto-generated hardware config
+secrets/
+  secrets.yaml                  # Encrypted secrets (sops-nix + age)
 confs/
   niri/config.kdl               # Niri keybindings and layout
   hyprlock.conf                 # Lock screen appearance
 templates/
-  rust-nextjs-flake.nix         # Reusable dev shell template
+  rust-nextjs-flake.nix         # Dev shell template: Rust + Next.js + Docker
+.sops.yaml                      # sops-nix encryption rules
 ```
 
 ## Flake Inputs
@@ -55,6 +126,7 @@ templates/
 | [nixpkgs](https://github.com/NixOS/nixpkgs) (unstable) | System packages |
 | [home-manager](https://github.com/nix-community/home-manager) | User-level config |
 | [stylix](https://github.com/danth/stylix) | Consistent theming |
+| [sops-nix](https://github.com/Mic92/sops-nix) | Secrets management |
 
 ## Getting Started
 
@@ -72,9 +144,12 @@ git clone https://github.com/<your-username>/nixos-config /etc/nixos-config
 # Generate your hardware config
 sudo nixos-generate-config --show-hardware-config > /etc/nixos-config/hosts/p14s/hardware-configuration.nix
 
-# Set your own hashed password
-mkpasswd -m sha-512 "your-password"
-# Replace the hashedPassword in hosts/p14s/configuration.nix
+# Set up secrets (age key + encrypted password)
+sudo mkdir -p /var/lib/sops-nix
+sudo age-keygen -o /var/lib/sops-nix/key.txt
+# Add the public key to .sops.yaml, then:
+mkpasswd -m sha-512    # generate your password hash
+sops secrets/secrets.yaml   # add: andrew-password: "$6$..."
 
 # Review and adjust:
 #   - Hostname in hosts/p14s/configuration.nix
@@ -130,8 +205,8 @@ All keybindings use `Mod` (Super/Windows key). Press `Mod+Shift+/` to open the k
 | `Mod+Q` | Close window |
 | `Mod+Escape` | Power menu |
 | `Mod+H/J/K/L` | Focus left/down/up/right |
-| `Mod+Ctrl+H/J/K/L` | Move window left/down/up/right |
-| `Mod+Shift+H/J/K/L` | Focus monitor left/down/up/right |
+| `Mod+Ctrl+H/J/K/L` | Move window |
+| `Mod+Shift+H/J/K/L` | Focus monitor |
 | `Mod+1-9` | Switch workspace |
 | `Mod+Ctrl+1-9` | Move window to workspace |
 | `Mod+F` | Maximize column |
