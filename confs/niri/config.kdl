@@ -39,21 +39,29 @@ layout {
     struts {}
 }
 
+// Laptop panel — always to the right of any external display
 output "eDP-1" {
     mode "1920x1200@60.002"
     scale 1.25
-    position x=0 y=0
+    position x=2560 y=0
 }
 
-output "DP-2" {
-    mode "1920x1080@60.000"
-    position x=1536 y=0
+// BenQ RD280UG (work) — matched by serial so it works on any DP port
+output "PNP(BNQ) BenQ RD280UG EMDBS00199087" {
+    mode "3840x2560@59.984"
+    scale 1.5
+    position x=0 y=0
+    focus-at-startup
 }
 
 spawn-at-startup "xwayland-satellite"
 spawn-at-startup "waybar"
 spawn-at-startup "mako"
 spawn-at-startup "wallpaper-launch"
+
+hotkey-overlay {
+    skip-at-startup
+}
 
 prefer-no-csd
 
@@ -96,9 +104,14 @@ binds {
     Mod+Return { spawn "ghostty"; }
     Mod+T      { spawn "ghostty"; }
     Mod+D      { spawn "rofi" "-show" "drun"; }
+    Mod+Space  { spawn "rofi" "-show" "drun"; }
     Mod+E      { spawn "ghostty" "-e" "yazi"; }
     Mod+Q      { close-window; }
     Mod+Escape { spawn "power-menu"; }
+
+    // ── Notifications ─────────────────────────────────
+    Mod+N       { spawn "makoctl" "dismiss"; }
+    Mod+Shift+N { spawn "makoctl" "dismiss" "--all"; }
 
     // ── Media keys ─────────────────────────────────
     XF86AudioRaiseVolume allow-when-locked=true { spawn "pamixer" "-i" "5"; }

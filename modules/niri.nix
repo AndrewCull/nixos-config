@@ -24,6 +24,10 @@
   # GNOME Keyring — auto-unlock on login
   services.gnome.gnome-keyring.enable = true;
   security.pam.services.greetd.enableGnomeKeyring = true;
+  security.pam.services.greetd.fprintAuth = true;
+
+  # Hyprlock PAM — needed for screen lock authentication
+  security.pam.services.hyprlock = {};
 
   # Bluetooth
   hardware.bluetooth.enable = true;

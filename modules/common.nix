@@ -1,4 +1,9 @@
-{ config, pkgs, inputs, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  ...
+}:
 
 {
   # ── Boot ──────────────────────────────────────────────
@@ -20,13 +25,22 @@
   # ── Users ─────────────────────────────────────────────
   users.users.andrew = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" "docker" "video" "audio" ];
+    extraGroups = [
+      "wheel"
+      "networkmanager"
+      "docker"
+      "video"
+      "audio"
+    ];
     shell = pkgs.fish;
   };
 
   # ── Nix settings ──────────────────────────────────────
   nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
     auto-optimise-store = true;
   };
 
@@ -45,7 +59,6 @@
     busybox
     alsa-utils
   ];
-
   # ── Shell ─────────────────────────────────────────────
   programs.fish.enable = true;
 
@@ -71,6 +84,9 @@
     enable = true;
     nssmdns4 = true;
   };
+
+  # ── Printing ─────────────────────────────────────
+  services.printing.enable = true;
 
   # ── Firmware ──────────────────────────────────────────
   hardware.enableAllFirmware = true;

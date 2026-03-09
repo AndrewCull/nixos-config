@@ -9,15 +9,28 @@
     enable32Bit = true;
   };
 
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
   boot.kernelParams = [
     "amd_pstate=active"
-    "thinkpad_acpi.mic_mute_led=0"
+    "thinkpad_acpi.mic_mute_led=1"
+    "amd_pmc.enable_stb=1"        # proper AMD s2idle power management
   ];
+
+  # Ensure AMD PMC is loaded for proper s2idle power states
+  boot.kernelModules = [ "amd_pmc" ];
 
   # NPU firmware is incompatible — disable to avoid errors and save power
   boot.blacklistedKernelModules = [ "amdxdna" ];
 
+  # ── Swap / hibernate ─────────────────────────────────
+  swapDevices = [{
+    device = "/var/lib/swapfile";
+    size = 96 * 1024;  # 96 GB — enough to hibernate 86 GB RAM
+  }];
+
   # ── Power management ──────────────────────────────────
+  powerManagement.enable = true;
   services.power-profiles-daemon.enable = false;
 
   services.tlp = {
@@ -30,7 +43,7 @@
       CPU_BOOST_ON_BAT = 0;
       CPU_BOOST_ON_AC = 1;
       PLATFORM_PROFILE_ON_BAT = "low-power";
-      PLATFORM_PROFILE_ON_AC = "performance";
+      PLATFORM_PROFILE_ON_AC = "balanced";
     };
   };
 
@@ -38,21 +51,54 @@
 
   powerManagement.powertop.enable = true;
 
-  environment.systemPackages = [ pkgs.powertop ];
+  environment.systemPackages = with pkgs; [ powertop lm_sensors ];
+
+  # ── Steam ────────────────────────────────────────
+  programs.steam = {
+    enable = true;
+    gamescopeSession.enable = true;
+  };
+  programs.gamemode.enable = true;
 
   # ── Fingerprint reader ────────────────────────────────
   services.fprintd.enable = true;
 
   # ── Lid/suspend behavior ──────────────────────────────
   services.logind.settings.Login = {
-    HandleLidSwitch = "suspend";
+    HandleLidSwitch = "suspend-then-hibernate";
     HandleLidSwitchExternalPower = "suspend";
+    InhibitDelayMaxSec = 5;
   };
+
+  # ── Suspend reliability ─────────────────────────────
+  systemd.sleep.extraConfig = ''
+    SuspendState=freeze
+    HibernateDelaySec=3600
+  '';
+
+  # Stop NetworkManager before sleep to avoid WiFi driver deadlocks
+  systemd.services."pre-sleep-nm-stop" = {
+    description = "Stop NetworkManager before sleep";
+    wantedBy = [ "sleep.target" ];
+    before = [ "sleep.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.networkmanager}/bin/nmcli networking off";
+      ExecStop = "${pkgs.networkmanager}/bin/nmcli networking on";
+      RemainAfterExit = true;
+    };
+  };
+
+  # -- Secrets --
+  sops.defaultSopsFile = ../../secrets/secrets.yaml;
+  sops.age.keyFile = "/var/lib/sops-nix/key.txt";
+
+  sops.secrets.andrew-password.neededForUsers = true;
 
   # -- User --
   users.users.andrew = {
     isNormalUser = true;
     extraGroups = [ "wheel" "video" "audio" "networkmanager" ];
-    initialPassword = "changeme";
+    hashedPasswordFile = config.sops.secrets.andrew-password.path;
   };
 }

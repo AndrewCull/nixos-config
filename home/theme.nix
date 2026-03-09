@@ -21,6 +21,10 @@
 
   fonts.fontconfig.enable = true;
 
+  home.sessionVariables = {
+    GIO_EXTRA_MODULES = "${pkgs.gvfs}/lib/gio/modules";
+  };
+
   home.packages = with pkgs; [
     nerd-fonts.fira-code
     nerd-fonts.jetbrains-mono

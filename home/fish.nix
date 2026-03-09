@@ -4,7 +4,9 @@
   programs.fish = {
     enable = true;
 
-    shellAliases = {
+    shellAbbrs = {
+      cd = "z";
+
       # nix
       rebuild = "sudo nixos-rebuild switch --flake /etc/nixos-config#(hostname)";
       update = "nix flake update /etc/nixos-config";
@@ -29,13 +31,38 @@
 
       # misc
       rd = "rm -rf";
-    };
 
-    shellAbbrs = {
-      cd = "z";
+      # navigation shortcuts
+      nxc = "z etc/nixos-config";
     };
 
     functions = {
+      # yazi — cd to last dir on exit
+      y = ''
+        set tmp (mktemp -t "yazi-cwd.XXXXXX")
+        command yazi $argv --cwd-file="$tmp"
+        if read -z cwd < "$tmp"; and [ "$cwd" != "$PWD" ]; and test -d "$cwd"
+            builtin cd -- "$cwd"
+        end
+        rm -f -- "$tmp"
+      '';
+
+      # ssh — load key from bitwarden vault
+      ssh-unlock = ''
+        bw unlock --check &>/dev/null; or bw login
+        set -x BW_SESSION (bw unlock --raw)
+        set -l tmpask (mktemp)
+        begin
+          echo "#!/bin/sh"
+          echo "export BW_SESSION=$BW_SESSION"
+          echo "bw get password 'SSH GitHub'"
+        end > $tmpask
+        chmod +x $tmpask
+        env SSH_ASKPASS=$tmpask SSH_ASKPASS_REQUIRE=force ssh-add ~/.ssh/github
+        rm -f $tmpask
+      '';
+
+      # multi-line helpers
       cdc = "mkdir -p $argv && cd $argv";
       cdb = "for i in (seq 1 $argv); cd ..; end";
     };

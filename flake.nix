@@ -13,16 +13,23 @@
       url = "github:danth/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, stylix, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, stylix, sops-nix, ... }@inputs:
   let
     system = "x86_64-linux";
 
     sharedModules = [
       ./modules/common.nix
       ./modules/niri.nix
+      ./modules/hhkb.nix
 
+      sops-nix.nixosModules.sops
       stylix.nixosModules.stylix
 
       home-manager.nixosModules.home-manager

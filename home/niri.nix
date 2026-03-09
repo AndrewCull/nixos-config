@@ -6,7 +6,7 @@ let
 
     case "$choice" in
       *Lock*)     hyprlock ;;
-      *Suspend*)  hyprlock & sleep 0.5 && systemctl suspend ;;
+      *Suspend*)  hyprlock & sleep 1 && systemctl suspend ;;
       *Reboot*)   systemctl reboot ;;
       *Shutdown*) systemctl poweroff ;;
       *Logout*)   niri msg action quit ;;
@@ -183,6 +183,7 @@ in
           format-ethernet = "󰈀";
           format-disconnected = "󰤭";
           tooltip-format = "{ifname}: {ipaddr}";
+          interval = 30;
           on-click = "ghostty -e nmtui";
         };
 
@@ -246,16 +247,17 @@ in
     enable = true;
     timeouts = [
       {
-        timeout = 300;
+        timeout = 900;
         command = "${pkgs.hyprlock}/bin/hyprlock";
       }
       {
-        timeout = 600;
+        timeout = 1200;
         command = "${pkgs.niri}/bin/niri msg action power-off-monitors";
       }
     ];
     events = {
-      before-sleep = "${pkgs.hyprlock}/bin/hyprlock";
+      before-sleep = "${pkgs.systemd}/bin/loginctl lock-session";
+      lock = "${pkgs.hyprlock}/bin/hyprlock";
     };
   };
 }

@@ -16,6 +16,11 @@
 
   programs.ripgrep.enable = true;
 
+  programs.pay-respects = {
+    enable = true;
+    enableFishIntegration = true;
+  };
+
   programs.zoxide = {
     enable = true;
     enableFishIntegration = true;
@@ -29,7 +34,7 @@
   programs.yazi = {
     enable = true;
     enableFishIntegration = true;
-    shellWrapperName = "y";
+    shellWrapperName = "";
   };
 
   # ── Packages ────────────────────────────────────────
@@ -43,11 +48,27 @@
     httpie          # simpler curl
     parallel        # better xargs
     unzip
+    p7zip
     tokei           # code stats
     dust            # disk usage
     arp-scan
     dig
     btop
     tmux
+    cargo
+    rustc
+    rustfmt
+    clippy
+
+    # yazi preview dependencies
+    poppler-utils       # PDF thumbnails
+    ffmpegthumbnailer   # video thumbnails
+    mediainfo           # media metadata
+    imagemagick         # SVG, HEIC, and other image formats
+    unar                # archive previews
+    fontpreview         # font file previews
+    hexyl               # hex viewer for binary files
+    miller              # CSV/TSV tabular preview
+    glow                # rendered markdown preview
   ];
 }

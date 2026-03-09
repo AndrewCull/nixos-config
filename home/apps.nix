@@ -6,7 +6,8 @@
     enable = true;
     commandLineArgs = [
       "--ozone-platform-hint=auto"
-      "--enable-features=VaapiVideoDecodeLinuxGL"
+      "--enable-features=VaapiVideoDecodeLinuxGL,VaapiVideoEncoder,VaapiIgnoreDriverChecks"
+      "--disable-features=UseChromeOSDirectVideoDecoder"
     ];
   };
 
@@ -46,12 +47,20 @@
       type = "Application";
       categories = [ "Office" "Calendar" ];
     };
+
+    netflix = {
+      name = "Netflix";
+      exec = "google-chrome-stable --app=https://netflix.com";
+      icon = "video-display";
+      type = "Application";
+      categories = [ "Network" "AudioVideo" ];
+    };
   };
 
   # ── Dev toolchains ──────────────────────────────────
   home.packages = with pkgs; [
-    # rust
-    rustup
+    # rust — individual packages instead of rustup to avoid NixOS friction
+    # (managed by nixpkgs unstable, so always near-latest stable)
 
     # node + claude code
     nodejs_22
@@ -60,6 +69,7 @@
     # general dev
     just        # command runner (modern make)
     dive        # docker image explorer
+    csvlens     # CSV viewer TUI
 
     # networking / ops
     tailscale
@@ -70,18 +80,36 @@
     mpv         # video
     imv         # image viewer for wayland
     zathura     # pdf viewer
+    xournalpp   # pdf annotation and signatures
 
     # gui apps
+    system-config-printer  # printer management
     nautilus    # file manager
     zed-editor
     warp-terminal
     teams-for-linux
     zoom-us
     bitwarden-desktop
+    bitwarden-cli
     obsidian
     spotify
+    slack
+    libreoffice
+
+    # terminal launcher for Nautilus "Open With"
+    xdg-terminal-exec
 
     # recording
     obs-studio
+
+    # fun hacker vibes
+    cmatrix         # Matrix rain
+    hollywood       # multi-pane hacker dashboard
+    cbonsai         # terminal bonsai tree
+    pipes-rs        # animated pipes screensaver
+    genact          # fake activity generator
+    fastfetch       # system info with ASCII art
+    nms             # Sneakers movie decryption effect
+    cool-retro-term # CRT terminal emulator
   ];
 }
