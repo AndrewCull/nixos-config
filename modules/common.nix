@@ -78,8 +78,21 @@
 
   # ── Network browsing (Nautilus) ───────────────────────
   services.gvfs.enable = true;
-  services.samba.enable = true;
-  services.samba.openFirewall = true;
+  services.samba = {
+    enable = true;
+    openFirewall = true;
+    settings.global = {
+      # performance
+      "socket options" = "TCP_NODELAY IPTOS_LOWDELAY SO_RCVBUF=131072 SO_SNDBUF=131072";
+      "use sendfile" = "yes";
+      "min receivefile size" = "16384";
+      "aio read size" = "16384";
+      "aio write size" = "16384";
+      # use SMB3 only (faster, secure)
+      "server min protocol" = "SMB3";
+      "client min protocol" = "SMB3";
+    };
+  };
   services.avahi = {
     enable = true;
     nssmdns4 = true;

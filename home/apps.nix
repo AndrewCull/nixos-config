@@ -70,11 +70,18 @@
     just        # command runner (modern make)
     dive        # docker image explorer
     csvlens     # CSV viewer TUI
+    pandoc      # document converter
+    (texliveSmall.withPackages (ps: with ps; [
+      collection-fontsrecommended
+      collection-latexrecommended
+      collection-mathscience
+    ]))
 
     # networking / ops
     tailscale
     openssl
     ssh-copy-id
+    rsync
 
     # media
     mpv         # video
@@ -92,6 +99,7 @@
     bitwarden-desktop
     bitwarden-cli
     obsidian
+    organicmaps
     spotify
     slack
     libreoffice

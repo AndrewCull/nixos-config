@@ -76,16 +76,14 @@
     HibernateDelaySec=3600
   '';
 
-  # Stop NetworkManager before sleep to avoid WiFi driver deadlocks
-  systemd.services."pre-sleep-nm-stop" = {
-    description = "Stop NetworkManager before sleep";
-    wantedBy = [ "sleep.target" ];
-    before = [ "sleep.target" ];
+  # Reload MT7925 WiFi driver on resume to avoid broken WiFi after s2idle
+  systemd.services."wifi-resume-fix" = {
+    description = "Reload MT7925 WiFi module on resume";
+    after = [ "suspend.target" "hibernate.target" "suspend-then-hibernate.target" ];
+    wantedBy = [ "suspend.target" "hibernate.target" "suspend-then-hibernate.target" ];
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = "${pkgs.networkmanager}/bin/nmcli networking off";
-      ExecStop = "${pkgs.networkmanager}/bin/nmcli networking on";
-      RemainAfterExit = true;
+      ExecStart = "${pkgs.kmod}/bin/modprobe -r mt7925e && ${pkgs.coreutils}/bin/sleep 1 && ${pkgs.kmod}/bin/modprobe mt7925e";
     };
   };
 
