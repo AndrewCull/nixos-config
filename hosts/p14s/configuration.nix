@@ -83,7 +83,11 @@
     wantedBy = [ "suspend.target" "hibernate.target" "suspend-then-hibernate.target" ];
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = "${pkgs.kmod}/bin/modprobe -r mt7925e && ${pkgs.coreutils}/bin/sleep 1 && ${pkgs.kmod}/bin/modprobe mt7925e";
+      ExecStart = pkgs.writeShellScript "wifi-resume" ''
+        ${pkgs.kmod}/bin/modprobe -r mt7925e
+        sleep 2
+        ${pkgs.kmod}/bin/modprobe mt7925e
+      '';
     };
   };
 

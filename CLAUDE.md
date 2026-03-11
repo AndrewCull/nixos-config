@@ -49,3 +49,7 @@ nix-collect-garbage -d
 - Home-manager uses `useGlobalPkgs` and `useUserPackages` — packages come from the system nixpkgs
 - `home/default.nix` auto-imports all sibling `.nix` files; no need to manually add imports when creating new home modules
 - `stateVersion` is `"24.11"` — do not change this
+
+## Rules
+
+- After every update to this configuration, revise the README.md file to include apps and configuration changes.

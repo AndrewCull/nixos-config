@@ -39,12 +39,13 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**.
 | Category | Tools |
 |----------|-------|
 | Rust | rustc, cargo, clippy, rustfmt, rust-analyzer |
-| Node.js | nodejs 22, pnpm, typescript-language-server |
+| Node.js | nodejs 22, pnpm, typescript-language-server, vercel (via npm) |
 | Nix | nil (LSP), nixfmt |
 | Git | git, gh (GitHub CLI), delta (diffs), lazygit |
 | Containers | Docker, dive (image explorer) |
 | Build/Run | just, watchexec, direnv |
 | Search | ripgrep, fd, fzf |
+| Databases | PostgreSQL (psql), TablePlus |
 | Data | jq, gron, miller, csvlens |
 | Monitoring | btop, bottom, dust, tokei |
 | HTTP | httpie |
@@ -65,13 +66,15 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**.
 | Images | imv |
 | Music | Spotify |
 | Passwords | Bitwarden |
+| Graphics | Graphite (vector editor) |
+| Code | Zed, Warp Terminal |
 | Gaming | Steam + Gamescope + GameMode |
 
 ## System Services
 
 | Service | Purpose |
 |---------|---------|
-| Tailscale | VPN / mesh networking |
+| Tailscale + Trayscale | VPN / mesh networking + GUI control |
 | PipeWire | Audio (with PulseAudio compat) |
 | TLP | Laptop power management |
 | thermald | Thermal management |
@@ -96,7 +99,7 @@ home/
   default.nix                   # Auto-imports all .nix files in this directory
   fish.nix                      # Shell config and aliases
   helix.nix                     # Editor + LSP setup
-  niri.nix                      # Waybar, rofi, mako, swayidle, hyprlock, wallpaper
+  niri.nix                      # Waybar (tailscale, memory, network, bt, audio, battery), rofi, mako, swayidle, hyprlock, wallpaper
   apps.nix                      # Browsers, GUI apps, PWA shortcuts
   dev.nix                       # CLI dev tools
   git.nix                       # Git config

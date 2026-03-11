@@ -66,6 +66,10 @@
     nodejs_22
     nodePackages.pnpm
 
+    # databases
+    postgresql  # psql client
+    tableplus   # GUI database client
+
     # general dev
     just        # command runner (modern make)
     dive        # docker image explorer
@@ -79,6 +83,7 @@
 
     # networking / ops
     tailscale
+    trayscale       # Tailscale GUI
     openssl
     ssh-copy-id
     rsync
@@ -90,6 +95,7 @@
     xournalpp   # pdf annotation and signatures
 
     # gui apps
+    graphite               # vector graphics editor
     system-config-printer  # printer management
     nautilus    # file manager
     zed-editor

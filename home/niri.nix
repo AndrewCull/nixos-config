@@ -146,8 +146,19 @@ in
   programs.waybar = {
     enable = true;
     style = ''
+      * {
+        font-size: 14px;
+      }
       #workspaces button.active {
         border-radius: 0;
+      }
+      #custom-tailscale,
+      #memory,
+      #network,
+      #bluetooth,
+      #pulseaudio,
+      #battery {
+        margin: 0 4px;
       }
     '';
     settings = {
@@ -158,7 +169,7 @@ in
         modules-left = [ "niri/workspaces" ];
         modules-center = [ "clock" ];
         modules-right = [
-          "cpu"
+          "custom/tailscale"
           "memory"
           "network"
           "bluetooth"
@@ -174,14 +185,14 @@ in
 
         battery = {
           format = "{icon} {capacity}%";
-          format-icons = [ "󰂎" "󰁺" "󰁻" "󰁼" "󰁽" "󰁾" "󰁿" "󰂀" "󰂁" "󰂂" "󰁹" ];
-          format-charging = "󰂄 {capacity}%";
+          format-icons = [ "<span size='large'>󰂎</span>" "<span size='large'>󰁺</span>" "<span size='large'>󰁻</span>" "<span size='large'>󰁼</span>" "<span size='large'>󰁽</span>" "<span size='large'>󰁾</span>" "<span size='large'>󰁿</span>" "<span size='large'>󰂀</span>" "<span size='large'>󰂁</span>" "<span size='large'>󰂂</span>" "<span size='large'>󰁹</span>" ];
+          format-charging = "<span size='large'>󰂄</span> {capacity}%";
         };
 
         network = {
-          format-wifi = "󰤨 {signalStrength}%";
-          format-ethernet = "󰈀";
-          format-disconnected = "󰤭";
+          format-wifi = "<span size='large'>󰤨</span> {signalStrength}%";
+          format-ethernet = "<span size='large'>󰈀</span>";
+          format-disconnected = "<span size='large'>󰤭</span>";
           tooltip-format = "{ifname}: {ipaddr}";
           interval = 30;
           on-click = "ghostty -e nmtui";
@@ -189,26 +200,42 @@ in
 
         pulseaudio = {
           format = "{icon} {volume}%";
-          format-icons = { default = [ "󰕿" "󰖀" "󰕾" ]; };
-          format-muted = "󰝟";
+          format-icons = { default = [ "<span size='large'>󰕿</span>" "<span size='large'>󰖀</span>" "<span size='large'>󰕾</span>" ]; };
+          format-muted = "<span size='large'>󰝟</span>";
         };
 
-        cpu = {
-          format = " {usage}%";
-          interval = 5;
-          on-click = "ghostty -e btop";
+        "custom/tailscale" = {
+          format = "{}";
+          interval = 10;
+          exec = pkgs.writeShellScript "waybar-tailscale" ''
+            S="large"
+            status=$(${pkgs.tailscale}/bin/tailscale status --json 2>/dev/null)
+            if [ $? -ne 0 ]; then
+              echo "{\"text\": \"<span size='$S'>󰖂</span>\", \"tooltip\": \"Tailscale: not running\", \"class\": \"disconnected\"}"
+              exit 0
+            fi
+            exit_node=$(echo "$status" | ${pkgs.jq}/bin/jq -r '.ExitNodeStatus.ID // empty')
+            if [ -n "$exit_node" ]; then
+              exit_name=$(echo "$status" | ${pkgs.jq}/bin/jq -r --arg id "$exit_node" '.Peer[$id].HostName // "unknown"')
+              echo "{\"text\": \"<span size='$S'>󱇱</span>\", \"tooltip\": \"Tailscale: exit node $exit_name\", \"class\": \"exit-node\"}"
+            else
+              echo "{\"text\": \"<span size='$S'>󰖂</span>\", \"tooltip\": \"Tailscale: connected\", \"class\": \"connected\"}"
+            fi
+          '';
+          return-type = "json";
+          on-click = "${pkgs.trayscale}/bin/trayscale";
         };
 
         memory = {
-          format = "󰍛 {percentage}%";
+          format = "<span size='large'>󰍛</span> {percentage}%";
           interval = 5;
           tooltip-format = "{used:0.1f}G / {total:0.1f}G";
           on-click = "ghostty -e btop";
         };
 
         bluetooth = {
-          format = "󰂯";
-          format-connected = "󰂱 {num_connections}";
+          format = "<span size='large'>󰂯</span>";
+          format-connected = "<span size='large'>󰂱</span> {num_connections}";
           format-disabled = "";
           tooltip-format-connected = "{device_enumerate}";
           tooltip-format-enumerate-connected = "{device_alias} {device_battery_percentage}%";
