@@ -211,15 +211,20 @@ in
             S="large"
             status=$(${pkgs.tailscale}/bin/tailscale status --json 2>/dev/null)
             if [ $? -ne 0 ]; then
-              echo "{\"text\": \"<span size='$S'>󰖂</span>\", \"tooltip\": \"Tailscale: not running\", \"class\": \"disconnected\"}"
+              echo "{\"text\": \"<span size='$S'>󰖂</span> ↓\", \"tooltip\": \"Tailscale: not running\", \"class\": \"disconnected\"}"
+              exit 0
+            fi
+            backend=$(echo "$status" | ${pkgs.jq}/bin/jq -r '.BackendState')
+            if [ "$backend" != "Running" ]; then
+              echo "{\"text\": \"<span size='$S'>󰖂</span> ↓\", \"tooltip\": \"Tailscale: $backend\", \"class\": \"disconnected\"}"
               exit 0
             fi
             exit_node=$(echo "$status" | ${pkgs.jq}/bin/jq -r '.ExitNodeStatus.ID // empty')
             if [ -n "$exit_node" ]; then
               exit_name=$(echo "$status" | ${pkgs.jq}/bin/jq -r --arg id "$exit_node" '.Peer[$id].HostName // "unknown"')
-              echo "{\"text\": \"<span size='$S'>󱇱</span>\", \"tooltip\": \"Tailscale: exit node $exit_name\", \"class\": \"exit-node\"}"
+              echo "{\"text\": \"<span size='$S'>󱇱</span> ↑\", \"tooltip\": \"Tailscale: exit node $exit_name\", \"class\": \"exit-node\"}"
             else
-              echo "{\"text\": \"<span size='$S'>󰖂</span>\", \"tooltip\": \"Tailscale: connected\", \"class\": \"connected\"}"
+              echo "{\"text\": \"<span size='$S'>󰖂</span> ↑\", \"tooltip\": \"Tailscale: connected\", \"class\": \"connected\"}"
             fi
           '';
           return-type = "json";
