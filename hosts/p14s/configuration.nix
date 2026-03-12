@@ -15,6 +15,8 @@
     "amd_pstate=active"
     "thinkpad_acpi.mic_mute_led=1"
     "amd_pmc.enable_stb=1"        # proper AMD s2idle power management
+    "rtc_cmos.use_acpi_alarm=1"    # RTC wake for hibernate timer on AMD
+    "amd_pmc.disable_workarounds=1" # help AMD PMC reach deeper idle states
   ];
 
   # Ensure AMD PMC is loaded for proper s2idle power states
@@ -44,6 +46,7 @@
       CPU_BOOST_ON_AC = 1;
       PLATFORM_PROFILE_ON_BAT = "low-power";
       PLATFORM_PROFILE_ON_AC = "balanced";
+      USB_AUTOSUSPEND = 1;
     };
   };
 
@@ -73,7 +76,7 @@
   # ── Suspend reliability ─────────────────────────────
   systemd.sleep.extraConfig = ''
     SuspendState=freeze
-    HibernateDelaySec=3600
+    HibernateDelaySec=900
   '';
 
   # Reload MT7925 WiFi driver on resume to avoid broken WiFi after s2idle

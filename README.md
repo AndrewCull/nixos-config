@@ -2,7 +2,7 @@
 
 Flake-based NixOS system configuration using nixpkgs unstable, [Niri](https://github.com/YaLTeR/niri) (scrollable tiling Wayland compositor), and [Stylix](https://github.com/danth/stylix) (Gruvbox Dark theming). Secrets managed with [sops-nix](https://github.com/Mic92/sops-nix).
 
-Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**.
+Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. Uses `suspend-then-hibernate` with a 15-minute s2idle window before hibernating to disk, optimized for AMD s2idle power efficiency.
 
 ## Desktop
 
@@ -76,7 +76,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**.
 |---------|---------|
 | Tailscale + Trayscale | VPN / mesh networking + GUI control |
 | PipeWire | Audio (with PulseAudio compat) |
-| TLP | Laptop power management |
+| TLP | Laptop power management (USB autosuspend enabled) |
 | thermald | Thermal management |
 | fprintd | Fingerprint authentication |
 | Docker | Container runtime (auto-prune) |
