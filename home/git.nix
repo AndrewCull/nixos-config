@@ -32,4 +32,22 @@
   };
 
   programs.lazygit.enable = true;
+
+  home.packages = [
+    pkgs.gitbutler
+    (pkgs.stdenv.mkDerivation {
+      pname = "but";
+      version = "0.19.5";
+      src = pkgs.fetchurl {
+        url = "https://releases.gitbutler.com/releases/release/0.19.5-2897/linux/x86_64/but";
+        hash = "sha256-qQAjL6ImIvCKGXELWmcAMBs0J3QPNP+0UsXUElpO1eg=";
+      };
+      nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+      buildInputs = [ pkgs.dbus pkgs.zlib pkgs.stdenv.cc.cc.lib ];
+      dontUnpack = true;
+      installPhase = ''
+        install -Dm755 $src $out/bin/but
+      '';
+    })
+  ];
 }

@@ -66,8 +66,22 @@ let
   '';
 
   mic-mute-toggle = pkgs.writeShellScriptBin "mic-mute-toggle" ''
+    # Toggle default source first, then read its new state
     ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
-    ${pkgs.alsa-utils}/bin/amixer -c1 set Capture toggle
+    muted=$(${pkgs.wireplumber}/bin/wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | ${pkgs.gnugrep}/bin/grep -c MUTED)
+
+    # Sync all other sources to match
+    ${pkgs.wireplumber}/bin/wpctl status | ${pkgs.gawk}/bin/awk '
+      /Sources:/ { s=1; next }
+      s && /Filters:|Streams:|^$/ { exit }
+      s { match($0, /[0-9]+\./); if (RSTART) print substr($0, RSTART, RLENGTH-1) }
+    ' | while read -r id; do
+      ${pkgs.wireplumber}/bin/wpctl set-mute "$id" "$muted"
+    done
+
+    # Sync LED with mute state
+    LED=/sys/devices/platform/thinkpad_acpi/leds/platform::micmute/brightness
+    [ -w "$LED" ] && echo "$muted" > "$LED"
   '';
 
   wallpaper-next = pkgs.writeShellScriptBin "wallpaper-next" ''

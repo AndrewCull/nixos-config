@@ -59,6 +59,7 @@
     rustc
     rustfmt
     clippy
+    gnumake         # make for Makefiles
 
     # yazi preview dependencies
     poppler-utils       # PDF thumbnails

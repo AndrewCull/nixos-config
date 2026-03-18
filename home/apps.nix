@@ -6,8 +6,16 @@
     enable = true;
     commandLineArgs = [
       "--ozone-platform-hint=auto"
-      "--enable-features=VaapiVideoDecodeLinuxGL,VaapiVideoEncoder,VaapiIgnoreDriverChecks"
+      "--enable-features=VaapiVideoDecodeLinuxGL,VaapiVideoEncoder,VaapiIgnoreDriverChecks,VulkanFromANGLE,DefaultANGLEVulkan,Vulkan"
       "--disable-features=UseChromeOSDirectVideoDecoder"
+      "--use-vulkan"
+      "--use-angle=vulkan"
+      "--enable-gpu-rasterization"
+      "--enable-zero-copy"
+      "--ignore-gpu-blocklist"
+      "--canvas-oop-rasterization"
+      "--disable-background-networking"
+      "--disable-backgrounding-occluded-windows"
     ];
   };
 
@@ -84,6 +92,7 @@
     # networking / ops
     tailscale
     trayscale       # Tailscale GUI
+    ngrok           # tunnel local servers for demos
     openssl
     ssh-copy-id
     rsync
