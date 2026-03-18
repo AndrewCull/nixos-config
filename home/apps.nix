@@ -48,14 +48,6 @@
       categories = [ "Network" "VideoConference" ];
     };
 
-    google-calendar = {
-      name = "Google Calendar";
-      exec = "google-chrome-stable --app=https://calendar.google.com";
-      icon = "calendar";
-      type = "Application";
-      categories = [ "Office" "Calendar" ];
-    };
-
     netflix = {
       name = "Netflix";
       exec = "google-chrome-stable --app=https://netflix.com";
@@ -113,6 +105,7 @@
     zoom-us
     bitwarden-desktop
     bitwarden-cli
+    morgen          # calendar app
     obsidian
     organicmaps
     spotify
