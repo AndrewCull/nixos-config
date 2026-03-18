@@ -2,14 +2,14 @@
 
 Flake-based NixOS system configuration using nixpkgs unstable, [Niri](https://github.com/YaLTeR/niri) (scrollable tiling Wayland compositor), and [Stylix](https://github.com/danth/stylix) (Gruvbox Dark theming). Secrets managed with [sops-nix](https://github.com/Mic92/sops-nix).
 
-Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. Uses `suspend-then-hibernate` with a 15-minute s2idle window before hibernating to disk, optimized for AMD s2idle power efficiency.
+Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. Uses `suspend-then-hibernate` with a 15-minute s2idle window before hibernating to a swapfile (`resume_offset` configured), optimized for AMD s2idle power efficiency. Boot output is silenced for a clean greetd login prompt.
 
 ## Desktop
 
 | Component | Program |
 |-----------|---------|
 | Compositor | Niri (scrollable tiling Wayland) |
-| Display Manager | greetd + tuigreet |
+| Display Manager | greetd + tuigreet (remembers username) |
 | Status Bar | Waybar |
 | Launcher | Rofi |
 | Notifications | Mako |
@@ -85,7 +85,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. Uses `suspe
 | CUPS | Printing |
 | fwupd | Firmware updates |
 | Blueman | Bluetooth management |
-| GNOME Keyring | Secret storage |
+| GNOME Keyring | Secret storage (auto-unlocks on password login) |
 
 ## Structure
 
