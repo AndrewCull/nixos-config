@@ -8,7 +8,7 @@
 
     settings = {
       command = "${config.programs.fish.package}/bin/fish";
-      font-family = "FiraCode Nerd Font Mono";
+      font-family = "JetBrainsMono Nerd Font Mono";
       font-size = 11;
 
       window-decoration = false;
