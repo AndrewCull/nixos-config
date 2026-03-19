@@ -11,12 +11,20 @@
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
+  boot.resumeDevice = "/dev/disk/by-uuid/e76b244b-31f9-47ea-9c5f-50b91a02a072";
+
   boot.kernelParams = [
     "amd_pstate=active"
     "thinkpad_acpi.mic_mute_led=1"
     "amd_pmc.enable_stb=1"        # proper AMD s2idle power management
     "rtc_cmos.use_acpi_alarm=1"    # RTC wake for hibernate timer on AMD
     "amd_pmc.disable_workarounds=1" # help AMD PMC reach deeper idle states
+    "resume_offset=9897984"        # physical offset of /var/lib/swapfile for hibernate
+  ];
+
+  # Let video group control the mic-mute LED (avoids sudo in toggle script)
+  systemd.tmpfiles.rules = [
+    "z /sys/devices/platform/thinkpad_acpi/leds/platform::micmute/brightness 0664 root video -"
   ];
 
   # Ensure AMD PMC is loaded for proper s2idle power states

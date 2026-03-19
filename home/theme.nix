@@ -23,6 +23,8 @@
 
   home.sessionVariables = {
     GIO_EXTRA_MODULES = "${pkgs.gvfs}/lib/gio/modules";
+    LIBVA_DRIVER_NAME = "radeonsi";
+    AMD_VULKAN_ICD = "RADV";
   };
 
   home.packages = with pkgs; [

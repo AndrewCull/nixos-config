@@ -6,8 +6,16 @@
     enable = true;
     commandLineArgs = [
       "--ozone-platform-hint=auto"
-      "--enable-features=VaapiVideoDecodeLinuxGL,VaapiVideoEncoder,VaapiIgnoreDriverChecks"
+      "--enable-features=VaapiVideoDecodeLinuxGL,VaapiVideoEncoder,VaapiIgnoreDriverChecks,VulkanFromANGLE,DefaultANGLEVulkan,Vulkan"
       "--disable-features=UseChromeOSDirectVideoDecoder"
+      "--use-vulkan"
+      "--use-angle=vulkan"
+      "--enable-gpu-rasterization"
+      "--enable-zero-copy"
+      "--ignore-gpu-blocklist"
+      "--canvas-oop-rasterization"
+      "--disable-background-networking"
+      "--disable-backgrounding-occluded-windows"
     ];
   };
 
@@ -38,14 +46,6 @@
       icon = "video-display";
       type = "Application";
       categories = [ "Network" "VideoConference" ];
-    };
-
-    google-calendar = {
-      name = "Google Calendar";
-      exec = "google-chrome-stable --app=https://calendar.google.com";
-      icon = "calendar";
-      type = "Application";
-      categories = [ "Office" "Calendar" ];
     };
 
     netflix = {
@@ -84,6 +84,7 @@
     # networking / ops
     tailscale
     trayscale       # Tailscale GUI
+    ngrok           # tunnel local servers for demos
     openssl
     ssh-copy-id
     rsync
@@ -104,6 +105,7 @@
     zoom-us
     bitwarden-desktop
     bitwarden-cli
+    morgen          # calendar app
     obsidian
     organicmaps
     spotify
