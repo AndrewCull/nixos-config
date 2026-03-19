@@ -31,6 +31,7 @@
 
       # misc
       rd = "rm -rf";
+      o = "obsidian";
 
       # navigation shortcuts
       nxc = "z etc/nixos-config";

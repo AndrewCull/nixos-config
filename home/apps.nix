@@ -107,6 +107,7 @@
     bitwarden-cli
     morgen          # calendar app
     obsidian
+    basalt          # Obsidian notes TUI
     organicmaps
     spotify
     slack
