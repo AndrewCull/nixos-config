@@ -10,8 +10,8 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. Uses `suspe
 |-----------|---------|
 | Compositor | Niri (scrollable tiling Wayland) |
 | Display Manager | greetd + tuigreet (remembers username) |
-| Status Bar | Waybar (with top-left Nix snowflake launcher button) |
-| Launcher | Rofi (anchored top-left under the bar) |
+| Status Bar | Waybar (with top-left Nix snowflake launcher button, square borders) |
+| Launcher | Rofi (anchored top-left under the bar, square borders) |
 | Notifications | Mako |
 | Screen Lock | Hyprlock + swayidle |
 | Wallpaper | swaybg (with rofi picker) |
@@ -196,7 +196,6 @@ The git setup layers several tools for different contexts:
 | **git** (CLI) | Core version control — rebase-on-pull, auto-setup remote tracking branches |
 | **[delta](https://github.com/dandavison/delta)** | Diff pager — side-by-side diffs with line numbers, gruvbox syntax highlighting |
 | **[lazygit](https://github.com/jesseduffield/lazygit)** | TUI for staging, committing, branch management, and interactive rebase |
-| **[GitButler](https://gitbutler.com/)** | GUI + CLI (`but`) for virtual branches — work on multiple branches simultaneously in one worktree |
 | **[gh](https://cli.github.com/)** | GitHub CLI — PRs, issues, and CI checks from the terminal (SSH protocol) |
 | **[helix](https://helix-editor.com/)** | Commit message editor |
 
@@ -208,7 +207,7 @@ The git setup layers several tools for different contexts:
 
 **Typical flow:**
 1. `gs` (git status) or open lazygit to see what's changed
-2. Stage and commit in lazygit, or use GitButler to sort changes across virtual branches
+2. Stage and commit in lazygit
 3. `gp` (git push) or push from lazygit
 4. `gh pr create` to open a PR from the terminal
 

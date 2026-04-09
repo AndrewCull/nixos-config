@@ -176,7 +176,7 @@ in
         margin: 3px 12px 3px 8px;
         padding: 0 10px;
         border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 6px;
+        border-radius: 0;
       }
     '';
     settings = {
@@ -301,7 +301,7 @@ in
         background-color: @bg;
         border:           1px;
         border-color:     @border;
-        border-radius:    8px;
+        border-radius:    0;
         padding:          14px;
       }
 
@@ -312,7 +312,7 @@ in
 
       inputbar {
         background-color: @bg-alt;
-        border-radius:    6px;
+        border-radius:    0;
         padding:          10px 14px;
         spacing:          10px;
         children:         [ prompt, entry ];
@@ -327,7 +327,7 @@ in
 
       message {
         background-color: @bg-alt;
-        border-radius:    6px;
+        border-radius:    0;
         padding:          8px 12px;
       }
 
@@ -346,7 +346,7 @@ in
       element {
         padding:       8px 10px;
         spacing:       10px;
-        border-radius: 6px;
+        border-radius: 0;
       }
 
       element selected {
