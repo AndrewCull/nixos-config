@@ -26,6 +26,19 @@ modules-left = [ "custom/launcher" "niri/workspaces" ];
 };
 ```
 
+### Rofi positioning (global)
+
+Anchor the rofi window to the top-left of the screen so it visually drops down from the launcher button. Add to `programs.rofi.extraConfig`:
+
+```nix
+location = 1;   # north-west
+anchor = 1;     # north-west
+x-offset = 0;
+y-offset = 28;  # waybar height, so rofi sits just beneath it
+```
+
+This applies to all rofi invocations (waybar button and existing keybindings).
+
 ### Style (append to `programs.waybar.style`)
 
 ```css

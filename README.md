@@ -10,8 +10,8 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. Uses `suspe
 |-----------|---------|
 | Compositor | Niri (scrollable tiling Wayland) |
 | Display Manager | greetd + tuigreet (remembers username) |
-| Status Bar | Waybar |
-| Launcher | Rofi |
+| Status Bar | Waybar (with top-left Nix snowflake launcher button) |
+| Launcher | Rofi (anchored top-left under the bar) |
 | Notifications | Mako |
 | Screen Lock | Hyprlock + swayidle |
 | Wallpaper | swaybg (with rofi picker) |

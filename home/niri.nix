@@ -115,9 +115,6 @@ in
     # bar
     waybar
 
-    # launcher
-    rofi
-
     # notifications
     mako
 
@@ -174,13 +171,20 @@ in
       #battery {
         margin: 0 4px;
       }
+      #custom-launcher {
+        font-size: 24px;
+        margin: 3px 12px 3px 8px;
+        padding: 0 10px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 6px;
+      }
     '';
     settings = {
       mainBar = {
         layer = "top";
         position = "top";
         height = 28;
-        modules-left = [ "niri/workspaces" ];
+        modules-left = [ "custom/launcher" "niri/workspaces" ];
         modules-center = [ "clock" ];
         modules-right = [
           "custom/tailscale"
@@ -190,6 +194,12 @@ in
           "pulseaudio"
           "battery"
         ];
+
+        "custom/launcher" = {
+          format = "󱄅";
+          tooltip = false;
+          on-click = "rofi -show drun";
+        };
 
         clock = {
           format = "{:%H:%M}";
@@ -268,12 +278,104 @@ in
   programs.rofi = {
     enable = true;
     package = pkgs.rofi;
+    plugins = [ pkgs.rofi-calc ];
     terminal = "ghostty";
+    theme = lib.mkForce "${pkgs.writeText "stylix-wide.rasi" (with config.lib.stylix.colors; ''
+      * {
+        bg:       #${base00};
+        bg-alt:   #${base01};
+        bg-sel:   #${base02};
+        fg:       #${base05};
+        fg-dim:   #${base04};
+        accent:   #${base0D};
+        urgent:   #${base08};
+        border:   #${base02};
+
+        background-color: transparent;
+        text-color:       @fg;
+        font:             "JetBrainsMono Nerd Font 12";
+      }
+
+      window {
+        width:            55%;
+        background-color: @bg;
+        border:           1px;
+        border-color:     @border;
+        border-radius:    8px;
+        padding:          14px;
+      }
+
+      mainbox {
+        children: [ inputbar, message, listview ];
+        spacing:  12px;
+      }
+
+      inputbar {
+        background-color: @bg-alt;
+        border-radius:    6px;
+        padding:          10px 14px;
+        spacing:          10px;
+        children:         [ prompt, entry ];
+      }
+
+      prompt { text-color: @accent; }
+
+      entry {
+        placeholder:       "Search…";
+        placeholder-color: @fg-dim;
+      }
+
+      message {
+        background-color: @bg-alt;
+        border-radius:    6px;
+        padding:          8px 12px;
+      }
+
+      textbox { text-color: @fg; }
+
+      listview {
+        columns:      2;
+        lines:        8;
+        spacing:      6px;
+        cycle:        true;
+        dynamic:      true;
+        scrollbar:    false;
+        fixed-height: true;
+      }
+
+      element {
+        padding:       8px 10px;
+        spacing:       10px;
+        border-radius: 6px;
+      }
+
+      element selected {
+        background-color: @accent;
+        text-color:       @bg;
+      }
+
+      element-icon {
+        size:             22px;
+        background-color: transparent;
+      }
+
+      element-text {
+        text-color:       inherit;
+        background-color: transparent;
+        vertical-align:   0.5;
+      }
+    '')}";
     extraConfig = {
+      modi = "drun,run,window,calc";
       show-icons = true;
       display-drun = "";
       display-run = "";
       display-window = "";
+      display-calc = "";
+      location = 1;   # north-west
+      anchor = 1;     # north-west
+      x-offset = 0;
+      y-offset = 28;  # matches waybar height
     };
   };
 
