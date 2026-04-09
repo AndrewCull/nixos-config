@@ -41,7 +41,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. Uses `suspe
 | Rust | rustc, cargo, clippy, rustfmt, rust-analyzer |
 | Node.js | nodejs 22, pnpm, typescript-language-server, vercel (via npm) |
 | Nix | nil (LSP), nixfmt |
-| Git | git, gh (GitHub CLI), delta (diffs), lazygit, GitButler |
+| Git | git, gh (GitHub CLI), delta (diffs), lazygit |
 | Containers | Docker, dive (image explorer) |
 | Build/Run | just, make, watchexec, direnv |
 | Search | ripgrep, fd, fzf |
