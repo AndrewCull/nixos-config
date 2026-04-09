@@ -226,6 +226,36 @@ in
           format = "{icon} {volume}%";
           format-icons = { default = [ "<span size='large'>󰕿</span>" "<span size='large'>󰖀</span>" "<span size='large'>󰕾</span>" ]; };
           format-muted = "<span size='large'>󰝟</span>";
+          on-click = "${pkgs.writeShellScript "rofi-sink-picker" ''
+            set -eu
+            PACTL=${pkgs.pulseaudio}/bin/pactl
+            ROFI=${pkgs.rofi}/bin/rofi
+            default=$($PACTL get-default-sink)
+            mapfile -t lines < <($PACTL -f json list sinks | ${pkgs.jq}/bin/jq -r '.[] | "\(.name)\t\(.description)"')
+            menu=""
+            for l in "''${lines[@]}"; do
+              name="''${l%%	*}"
+              desc="''${l#*	}"
+              prefix="  "
+              [ "$name" = "$default" ] && prefix="● "
+              menu+="$prefix$desc"$'\n'
+            done
+            chosen=$(printf '%s' "$menu" | $ROFI -dmenu -i -p "Output" -theme-str 'window { width: 30%; }')
+            [ -z "$chosen" ] && exit 0
+            chosen="''${chosen#* }"
+            for l in "''${lines[@]}"; do
+              name="''${l%%	*}"
+              desc="''${l#*	}"
+              if [ "$desc" = "$chosen" ]; then
+                $PACTL set-default-sink "$name"
+                $PACTL list short sink-inputs | while read -r id _; do
+                  $PACTL move-sink-input "$id" "$name" || true
+                done
+                break
+              fi
+            done
+          ''}";
+          on-click-right = "${pkgs.pavucontrol}/bin/pavucontrol";
         };
 
         "custom/tailscale" = {
