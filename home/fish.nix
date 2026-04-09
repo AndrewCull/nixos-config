@@ -74,6 +74,9 @@
 
       fish_add_path ~/.npm-global/bin
       fish_add_path ~/.local/bin
+
+      mkdir -p ~/.local/bin
+      ln -sf ~/Code/agema_os/os-cli/target/release/os ~/.local/bin/os
     '';
   };
 }

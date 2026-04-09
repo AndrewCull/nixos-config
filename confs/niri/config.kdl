@@ -46,7 +46,10 @@ output "eDP-1" {
     position x=2560 y=0
 }
 
-// BenQ RD280UG (work) — matched by serial so it works on any DP port
+// BenQ RD280UG (work) — matched by serial so it works on any DP port.
+// 120 Hz at 4K+ requires DP UHBR, which fails to retrain after s2idle
+// (amdgpu: "enabling link 3 failed: 15"), causing artifacts and blinking.
+// 60 Hz is stable across resume. VRR also disabled — it compounds the issue.
 output "PNP(BNQ) BenQ RD280UG EMDBS00199087" {
     mode "3840x2560@59.984"
     scale 1.5
@@ -159,20 +162,12 @@ binds {
     Mod+3 { focus-workspace 3; }
     Mod+4 { focus-workspace 4; }
     Mod+5 { focus-workspace 5; }
-    Mod+6 { focus-workspace 6; }
-    Mod+7 { focus-workspace 7; }
-    Mod+8 { focus-workspace 8; }
-    Mod+9 { focus-workspace 9; }
 
-    Mod+Ctrl+1 { move-column-to-workspace 1; }
-    Mod+Ctrl+2 { move-column-to-workspace 2; }
-    Mod+Ctrl+3 { move-column-to-workspace 3; }
-    Mod+Ctrl+4 { move-column-to-workspace 4; }
-    Mod+Ctrl+5 { move-column-to-workspace 5; }
-    Mod+Ctrl+6 { move-column-to-workspace 6; }
-    Mod+Ctrl+7 { move-column-to-workspace 7; }
-    Mod+Ctrl+8 { move-column-to-workspace 8; }
-    Mod+Ctrl+9 { move-column-to-workspace 9; }
+    Mod+Ctrl+1 { move-column-to-workspace focus=false 1; }
+    Mod+Ctrl+2 { move-column-to-workspace focus=false 2; }
+    Mod+Ctrl+3 { move-column-to-workspace focus=false 3; }
+    Mod+Ctrl+4 { move-column-to-workspace focus=false 4; }
+    Mod+Ctrl+5 { move-column-to-workspace focus=false 5; }
 
     Mod+Page_Down      { focus-workspace-down; }
     Mod+Page_Up        { focus-workspace-up; }

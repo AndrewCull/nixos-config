@@ -2,7 +2,7 @@
 
 Flake-based NixOS system configuration using nixpkgs unstable, [Niri](https://github.com/YaLTeR/niri) (scrollable tiling Wayland compositor), and [Stylix](https://github.com/danth/stylix) (Gruvbox Dark theming). Secrets managed with [sops-nix](https://github.com/Mic92/sops-nix).
 
-Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. Uses `suspend-then-hibernate` with a 15-minute s2idle window before hibernating to a swapfile (`resume_offset` configured), optimized for AMD s2idle power efficiency. Boot output is silenced for a clean greetd login prompt.
+Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. Uses `suspend-then-hibernate` with a 2-minute s2idle window before hibernating to a swapfile (`resume_offset` configured), optimized for AMD s2idle power efficiency. A `resume-fix` systemd service rebinds all `xhci_hcd` PCI controllers and reloads `uvcvideo` + `mt7925e` after wake to recover the webcam, USB-C dock and WiFi which die during s2idle. PSR is disabled via `amdgpu.dcdebugmask=0x10` to prevent post-resume DisplayPort flicker on external monitors. Boot output is silenced for a clean greetd login prompt.
 
 ## Desktop
 
@@ -20,7 +20,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. Uses `suspe
 | Theme | Gruvbox Dark Medium (via Stylix) |
 | Icons | Papirus-Dark |
 | Cursor | phinger-cursors-light |
-| Fonts | Inter (UI), FiraCode Nerd Font Mono (terminal) |
+| Fonts | JetBrains Mono (UI + terminal, Nerd Font variant) |
 
 ## Terminal & Shell
 
@@ -77,9 +77,9 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. Uses `suspe
 | Tailscale + Trayscale | VPN / mesh networking + GUI control |
 | ngrok | Tunnel local servers for demos |
 | PipeWire | Audio (with PulseAudio compat) |
-| TLP | Laptop power management (USB autosuspend enabled) |
+| TLP | Laptop power management (USB autosuspend disabled — kills xHCI on resume) |
 | thermald | Thermal management |
-| fprintd | Fingerprint authentication |
+| fprintd | Fingerprint authentication (disabled for greetd and hyprlock — fprintd timeouts blocked password entry) |
 | Docker | Container runtime (auto-prune) |
 | Samba + Avahi | Network file sharing / discovery |
 | CUPS | Printing |

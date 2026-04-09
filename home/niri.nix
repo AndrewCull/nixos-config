@@ -294,7 +294,7 @@ in
     timeouts = [
       {
         timeout = 900;
-        command = "${pkgs.hyprlock}/bin/hyprlock";
+        command = "${pkgs.procps}/bin/pgrep -x hyprlock || ${pkgs.hyprlock}/bin/hyprlock";
       }
       {
         timeout = 1200;
@@ -303,7 +303,7 @@ in
     ];
     events = {
       before-sleep = "${pkgs.systemd}/bin/loginctl lock-session";
-      lock = "${pkgs.hyprlock}/bin/hyprlock";
+      lock = "${pkgs.procps}/bin/pgrep -x hyprlock || ${pkgs.hyprlock}/bin/hyprlock";
     };
   };
 }

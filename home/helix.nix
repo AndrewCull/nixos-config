@@ -21,7 +21,12 @@
           left = [ "mode" "spinner" "file-name" "file-modification-indicator" ];
           right = [ "diagnostics" "selections" "position" "file-encoding" "file-line-ending" "file-type" ];
         };
-        soft-wrap.enable = true;
+        text-width = 80;
+        soft-wrap = {
+          enable = true;
+          wrap-at-text-width = true;
+          wrap-indicator = "↪ ";
+        };
       };
 
       keys.normal = {

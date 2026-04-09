@@ -8,6 +8,10 @@
       identityFile = "~/.ssh/github";
       identitiesOnly = true;
     };
+    matchBlocks."*.render.com render.com" = {
+      identityFile = "~/.ssh/render";
+      identitiesOnly = true;
+    };
   };
 
   services.ssh-agent.enable = true;
