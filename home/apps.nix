@@ -19,7 +19,31 @@
     ];
   };
 
-  programs.firefox.enable = true;
+  programs.firefox = {
+    enable = true;
+    profiles.default = {
+      settings = {
+        # ── Hardware video acceleration (AMD VA-API) ──
+        "media.ffmpeg.vaapi.enabled" = true;
+        "media.hardware-video-decoding.enabled" = true;
+        "media.hardware-video-decoding.force-enabled" = true;
+        "gfx.webrender.all" = true;
+
+        # ── WebGL / GPU compositing ──────────────────
+        "webgl.force-enabled" = true;
+        "layers.acceleration.force-enabled" = true;
+        "gfx.canvas.accelerated" = true;
+
+        # ── Wayland native ───────────────────────────
+        "widget.use-xdg-desktop-portal.file-picker" = 1;
+
+        # ── WebRTC (video calls) optimizations ───────
+        "media.navigator.mediadatadecoder_vpx_enabled" = true;
+        "media.webrtc.hw.h264.enabled" = true;
+        "media.peerconnection.video.h264_enabled" = true;
+      };
+    };
+  };
   stylix.targets.firefox.profileNames = [ "default" ];
 
   # ── Web App PWAs ────────────────────────────────────
@@ -58,7 +82,21 @@
   };
 
   # ── Dev toolchains ──────────────────────────────────
-  home.packages = with pkgs; [
+  home.packages = with pkgs; let
+    render-cli = stdenv.mkDerivation rec {
+      pname = "render-cli";
+      version = "2.14.0";
+      src = fetchzip {
+        url = "https://github.com/render-oss/cli/releases/download/v${version}/cli_${version}_linux_amd64.zip";
+        hash = "sha256-gow0w0ioPG/I2RQwj5RRJQqCDoGSHAzxIaIliBApygw=";
+        stripRoot = false;
+      };
+      nativeBuildInputs = [ autoPatchelfHook ];
+      installPhase = ''
+        install -Dm755 cli_v${version} $out/bin/render
+      '';
+    };
+  in [
     # rust — individual packages instead of rustup to avoid NixOS friction
     # (managed by nixpkgs unstable, so always near-latest stable)
 
@@ -80,6 +118,9 @@
       collection-latexrecommended
       collection-mathscience
     ]))
+
+    # cloud / deploy
+    render-cli      # Render.com CLI
 
     # networking / ops
     tailscale
@@ -112,12 +153,20 @@
     spotify
     slack
     libreoffice
+    prusa-slicer
+    inkscape
 
     # terminal launcher for Nautilus "Open With"
     xdg-terminal-exec
 
     # recording
     obs-studio
+
+    # local CLIs (symlinked from source builds)
+    (pkgs.runCommand "os-cli" {} ''
+      mkdir -p $out/bin
+      ln -s /home/andrew/code/agema_os/os-cli/target/release/os $out/bin/os
+    '')
 
     # fun hacker vibes
     cmatrix         # Matrix rain

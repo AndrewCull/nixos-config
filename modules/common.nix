@@ -15,6 +15,7 @@
   # ── Networking ────────────────────────────────────────
   networking.networkmanager.enable = true;
   networking.firewall.enable = true;
+  networking.firewall.allowedTCPPorts = [ 8081 ];
 
   # ── Tailscale ─────────────────────────────────────────
   services.tailscale.enable = true;
@@ -80,6 +81,8 @@
 
   # ── Network browsing (Nautilus) ───────────────────────
   services.gvfs.enable = true;
+  services.gnome.localsearch.enable = true;
+  services.gnome.tinysparql.enable = true;
   services.samba = {
     enable = true;
     openFirewall = true;

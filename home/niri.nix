@@ -115,9 +115,6 @@ in
     # bar
     waybar
 
-    # launcher
-    rofi
-
     # notifications
     mako
 
@@ -174,13 +171,20 @@ in
       #battery {
         margin: 0 4px;
       }
+      #custom-launcher {
+        font-size: 24px;
+        margin: 3px 12px 3px 8px;
+        padding: 0 10px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 0;
+      }
     '';
     settings = {
       mainBar = {
         layer = "top";
         position = "top";
         height = 28;
-        modules-left = [ "niri/workspaces" ];
+        modules-left = [ "custom/launcher" "niri/workspaces" ];
         modules-center = [ "clock" ];
         modules-right = [
           "custom/tailscale"
@@ -190,6 +194,12 @@ in
           "pulseaudio"
           "battery"
         ];
+
+        "custom/launcher" = {
+          format = "󱄅";
+          tooltip = false;
+          on-click = "rofi -show drun";
+        };
 
         clock = {
           format = "{:%H:%M}";
@@ -216,6 +226,36 @@ in
           format = "{icon} {volume}%";
           format-icons = { default = [ "<span size='large'>󰕿</span>" "<span size='large'>󰖀</span>" "<span size='large'>󰕾</span>" ]; };
           format-muted = "<span size='large'>󰝟</span>";
+          on-click = "${pkgs.writeShellScript "rofi-sink-picker" ''
+            set -eu
+            PACTL=${pkgs.pulseaudio}/bin/pactl
+            ROFI=${pkgs.rofi}/bin/rofi
+            default=$($PACTL get-default-sink)
+            mapfile -t lines < <($PACTL -f json list sinks | ${pkgs.jq}/bin/jq -r '.[] | "\(.name)\t\(.description)"')
+            menu=""
+            for l in "''${lines[@]}"; do
+              name="''${l%%	*}"
+              desc="''${l#*	}"
+              prefix="  "
+              [ "$name" = "$default" ] && prefix="● "
+              menu+="$prefix$desc"$'\n'
+            done
+            chosen=$(printf '%s' "$menu" | $ROFI -dmenu -i -p "Output" -theme-str 'window { width: 30%; }')
+            [ -z "$chosen" ] && exit 0
+            chosen="''${chosen#* }"
+            for l in "''${lines[@]}"; do
+              name="''${l%%	*}"
+              desc="''${l#*	}"
+              if [ "$desc" = "$chosen" ]; then
+                $PACTL set-default-sink "$name"
+                $PACTL list short sink-inputs | while read -r id _; do
+                  $PACTL move-sink-input "$id" "$name" || true
+                done
+                break
+              fi
+            done
+          ''}";
+          on-click-right = "${pkgs.pavucontrol}/bin/pavucontrol";
         };
 
         "custom/tailscale" = {
@@ -268,12 +308,104 @@ in
   programs.rofi = {
     enable = true;
     package = pkgs.rofi;
+    plugins = [ pkgs.rofi-calc ];
     terminal = "ghostty";
+    theme = lib.mkForce "${pkgs.writeText "stylix-wide.rasi" (with config.lib.stylix.colors; ''
+      * {
+        bg:       #${base00};
+        bg-alt:   #${base01};
+        bg-sel:   #${base02};
+        fg:       #${base05};
+        fg-dim:   #${base04};
+        accent:   #${base0D};
+        urgent:   #${base08};
+        border:   #${base02};
+
+        background-color: transparent;
+        text-color:       @fg;
+        font:             "JetBrainsMono Nerd Font 12";
+      }
+
+      window {
+        width:            55%;
+        background-color: @bg;
+        border:           1px;
+        border-color:     @border;
+        border-radius:    0;
+        padding:          14px;
+      }
+
+      mainbox {
+        children: [ inputbar, message, listview ];
+        spacing:  12px;
+      }
+
+      inputbar {
+        background-color: @bg-alt;
+        border-radius:    0;
+        padding:          10px 14px;
+        spacing:          10px;
+        children:         [ prompt, entry ];
+      }
+
+      prompt { text-color: @accent; }
+
+      entry {
+        placeholder:       "Search…";
+        placeholder-color: @fg-dim;
+      }
+
+      message {
+        background-color: @bg-alt;
+        border-radius:    0;
+        padding:          8px 12px;
+      }
+
+      textbox { text-color: @fg; }
+
+      listview {
+        columns:      2;
+        lines:        8;
+        spacing:      6px;
+        cycle:        true;
+        dynamic:      true;
+        scrollbar:    false;
+        fixed-height: true;
+      }
+
+      element {
+        padding:       8px 10px;
+        spacing:       10px;
+        border-radius: 0;
+      }
+
+      element selected {
+        background-color: @accent;
+        text-color:       @bg;
+      }
+
+      element-icon {
+        size:             22px;
+        background-color: transparent;
+      }
+
+      element-text {
+        text-color:       inherit;
+        background-color: transparent;
+        vertical-align:   0.5;
+      }
+    '')}";
     extraConfig = {
+      modi = "drun,run,window,calc";
       show-icons = true;
       display-drun = "";
       display-run = "";
       display-window = "";
+      display-calc = "";
+      location = 1;   # north-west
+      anchor = 1;     # north-west
+      x-offset = 0;
+      y-offset = 28;  # matches waybar height
     };
   };
 
@@ -294,7 +426,7 @@ in
     timeouts = [
       {
         timeout = 900;
-        command = "${pkgs.hyprlock}/bin/hyprlock";
+        command = "${pkgs.procps}/bin/pgrep -x hyprlock || ${pkgs.hyprlock}/bin/hyprlock";
       }
       {
         timeout = 1200;
@@ -303,7 +435,7 @@ in
     ];
     events = {
       before-sleep = "${pkgs.systemd}/bin/loginctl lock-session";
-      lock = "${pkgs.hyprlock}/bin/hyprlock";
+      lock = "${pkgs.procps}/bin/pgrep -x hyprlock || ${pkgs.hyprlock}/bin/hyprlock";
     };
   };
 }

@@ -24,6 +24,7 @@
   home.sessionVariables = {
     GIO_EXTRA_MODULES = "${pkgs.gvfs}/lib/gio/modules";
     LIBVA_DRIVER_NAME = "radeonsi";
+    MOZ_ENABLE_WAYLAND = "1";
     AMD_VULKAN_ICD = "RADV";
   };
 
