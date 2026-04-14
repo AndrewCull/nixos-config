@@ -15,6 +15,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. Uses `suspe
 | Notifications | Mako |
 | Screen Lock | Hyprlock + swayidle |
 | Wallpaper | swaybg (with rofi picker) |
+| Night Mode | wlsunset (eDP-1 only, 4000K night / 6500K day, 20:00–07:00) |
 | Screenshots | grim + slurp |
 | Clipboard | wl-clipboard + cliphist |
 | Theme | Gruvbox Dark Medium (via Stylix) |

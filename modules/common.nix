@@ -101,10 +101,18 @@
   services.avahi = {
     enable = true;
     nssmdns4 = true;
+    openFirewall = true;   # allow mDNS through the firewall (UDP 5353)
+    publish = {
+      enable = true;
+      userServices = true;
+    };
   };
 
   # ── Printing ─────────────────────────────────────
-  services.printing.enable = true;
+  services.printing = {
+    enable = true;
+    browsed.enable = true;
+  };
 
   # ── Firmware ──────────────────────────────────────────
   hardware.enableAllFirmware = true;
