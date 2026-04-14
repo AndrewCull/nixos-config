@@ -60,6 +60,7 @@
     rustfmt
     clippy
     gnumake         # make for Makefiles
+    uv              # python package/project manager (Astral)
 
     # yazi preview dependencies
     poppler-utils       # PDF thumbnails

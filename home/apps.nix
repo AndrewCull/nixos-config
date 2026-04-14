@@ -79,6 +79,14 @@
       type = "Application";
       categories = [ "Network" "AudioVideo" ];
     };
+
+    display-pilot-2 = {
+      name = "Display Pilot 2";
+      exec = "/home/andrew/Applications/DisplayPilot2.AppImage";
+      icon = "preferences-desktop-display";
+      type = "Application";
+      categories = [ "Settings" "HardwareSettings" ];
+    };
   };
 
   # ── Dev toolchains ──────────────────────────────────
