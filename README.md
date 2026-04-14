@@ -85,6 +85,8 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. Uses `suspe
 | Samba + Avahi | Network file sharing / discovery |
 | CUPS | Printing |
 | fwupd | Firmware updates |
+| AppImage | `programs.appimage` with binfmt — run `.AppImage` files directly |
+| i2c | `hardware.i2c.enable` + user in `i2c` group — DDC/CI access for external monitor tools (e.g. BenQ Display Pilot 2) |
 | Blueman | Bluetooth management |
 | GNOME Keyring | Secret storage (auto-unlocks on password login) |
 

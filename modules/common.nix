@@ -34,6 +34,7 @@
       "docker"
       "video"
       "audio"
+      "i2c"
     ];
     shell = pkgs.fish;
   };
@@ -120,6 +121,15 @@
 
   # ── nix-ld (for non-nix binaries) ────────────────────
   programs.nix-ld.enable = true;
+
+  # ── AppImage support ─────────────────────────────────
+  programs.appimage = {
+    enable = true;
+    binfmt = true;
+  };
+
+  # ── i2c (DDC/CI for external monitors) ───────────────
+  hardware.i2c.enable = true;
 
   # ── Stylix (global theming — gruvbox) ─────────────────
   stylix = {
