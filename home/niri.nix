@@ -40,31 +40,49 @@ let
     } | rofi -dmenu -p "Keybindings" -i -no-custom -theme-str 'window {width: 50%;}'
   '';
 
+  # Build a waybar style file that @imports the stylix/home-manager-generated
+  # style (which must stay the FIRST statement — GTK CSS rejects @import after
+  # any rule) and appends a single window#waybar background override sourced
+  # from the wallpaper's dominant color.
   wallpaper-colorize = pkgs.writeShellScriptBin "wallpaper-colorize" ''
     wp="''${1:-$(cat "$HOME/.config/current-wallpaper" 2>/dev/null)}"
-    [ -f "$wp" ] || exit 0
-    out="$HOME/.cache/waybar/wallpaper.css"
+    out="$HOME/.cache/waybar/style.css"
+    base="$HOME/.config/waybar/style.css"
     mkdir -p "$(dirname "$out")"
-    hex=$(${pkgs.imagemagick}/bin/magick "$wp" -resize 200x200 -colors 5 -depth 8 -format "%c" histogram:info: \
-      | sort -rn \
-      | ${pkgs.gawk}/bin/awk 'NR==1 { for (i=1;i<=NF;i++) if ($i ~ /^#[0-9A-Fa-f]{6}/) { print substr($i,1,7); exit } }')
-    [ -z "$hex" ] && exit 0
-    r=$((16#''${hex:1:2}))
-    g=$((16#''${hex:3:2}))
-    b=$((16#''${hex:5:2}))
-    # Cap brightest channel at ~80/255 so light-dominant wallpapers still
-    # produce a dim bar where light text/icons stay readable. Dark wallpapers
-    # pass through unchanged, preserving their natural hue.
-    max=$r
-    [ $g -gt $max ] && max=$g
-    [ $b -gt $max ] && max=$b
-    if [ "$max" -gt 80 ]; then
-      r=$(( r * 80 / max ))
-      g=$(( g * 80 / max ))
-      b=$(( b * 80 / max ))
-    fi
-    printf 'window#waybar { background-color: rgba(%d, %d, %d, 0.92); }\n' "$r" "$g" "$b" > "$out"
+
+    {
+      printf '@import "%s";\n' "$base"
+      if [ -f "$wp" ]; then
+        hex=$(${pkgs.imagemagick}/bin/magick "$wp" -resize 200x200 -colors 5 -depth 8 -format "%c" histogram:info: \
+          | sort -rn \
+          | ${pkgs.gawk}/bin/awk 'NR==1 { for (i=1;i<=NF;i++) if ($i ~ /^#[0-9A-Fa-f]{6}/) { print substr($i,1,7); exit } }')
+        if [ -n "$hex" ]; then
+          r=$((16#''${hex:1:2}))
+          g=$((16#''${hex:3:2}))
+          b=$((16#''${hex:5:2}))
+          max=$r
+          [ $g -gt $max ] && max=$g
+          [ $b -gt $max ] && max=$b
+          if [ "$max" -gt 80 ]; then
+            r=$(( r * 80 / max ))
+            g=$(( g * 80 / max ))
+            b=$(( b * 80 / max ))
+          fi
+          printf 'window#waybar { background-color: rgba(%d, %d, %d, 0.92); }\n' "$r" "$g" "$b"
+        fi
+      fi
+    } > "$out"
+
     ${pkgs.procps}/bin/pkill -SIGUSR2 waybar 2>/dev/null || true
+  '';
+
+  waybar-launcher = pkgs.writeShellScriptBin "waybar-launcher" ''
+    # Seed the runtime style with the base @import so waybar can start even
+    # before any wallpaper has been picked.
+    out="$HOME/.cache/waybar/style.css"
+    mkdir -p "$(dirname "$out")"
+    [ -s "$out" ] || printf '@import "%s";\n' "$HOME/.config/waybar/style.css" > "$out"
+    exec ${pkgs.waybar}/bin/waybar -s "$out"
   '';
 
   wallpaper-launch = pkgs.writeShellScriptBin "wallpaper-launch" ''
@@ -143,11 +161,14 @@ in
   xdg.configFile."niri/config.kdl".source = ../confs/niri/config.kdl;
   xdg.configFile."hypr/hyprlock.conf".source = ../confs/hyprlock.conf;
 
-  # Ensure the runtime-generated waybar wallpaper colors file exists so
-  # waybar's @import doesn't fail on first boot.
-  home.activation.waybarWallpaperCss = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  # Seed the runtime waybar style that niri launches with, so waybar can come
+  # up before any wallpaper has been picked. waybar-launcher re-seeds it at
+  # runtime too; this just covers the first boot after activation.
+  home.activation.waybarRuntimeStyle = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     run mkdir -p $HOME/.cache/waybar
-    [ -f $HOME/.cache/waybar/wallpaper.css ] || run touch $HOME/.cache/waybar/wallpaper.css
+    if [ ! -s $HOME/.cache/waybar/style.css ]; then
+      run sh -c 'printf ''\''@import "%s";\n''\'' "$HOME/.config/waybar/style.css" > "$HOME/.cache/waybar/style.css"'
+    fi
   '';
 
   home.packages = with pkgs; [
@@ -193,6 +214,7 @@ in
     wallpaper-pick
     wallpaper-next
     wallpaper-colorize
+    waybar-launcher
     mic-mute-toggle
   ];
 
@@ -200,7 +222,6 @@ in
   programs.waybar = {
     enable = true;
     style = with config.lib.stylix.colors; ''
-      @import "${config.home.homeDirectory}/.cache/waybar/wallpaper.css";
       * {
         font-size: 14px;
       }
