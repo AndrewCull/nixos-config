@@ -1,8 +1,8 @@
 # NixOS Config
 
-Flake-based NixOS system configuration using nixpkgs unstable, [Niri](https://github.com/YaLTeR/niri) (scrollable tiling Wayland compositor), and [Stylix](https://github.com/danth/stylix) (Gruvbox Dark theming). Secrets managed with [sops-nix](https://github.com/Mic92/sops-nix).
+Flake-based NixOS system configuration using nixpkgs unstable, [Niri](https://github.com/YaLTeR/niri) (scrollable tiling Wayland compositor), and [Stylix](https://github.com/danth/stylix) (Gruvbox Dark Medium, dark polarity — image-derived palette is wired up but disabled while the wallpaper is near-monochrome). Secrets managed with [sops-nix](https://github.com/Mic92/sops-nix).
 
-Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. Uses `suspend-then-hibernate` with a 2-minute s2idle window before hibernating to a swapfile (`resume_offset` configured), optimized for AMD s2idle power efficiency. A `resume-fix` systemd service rebinds all `xhci_hcd` PCI controllers and reloads `uvcvideo` + `mt7925e` after wake to recover the webcam, USB-C dock and WiFi which die during s2idle. PSR is disabled via `amdgpu.dcdebugmask=0x10` to prevent post-resume DisplayPort flicker on external monitors. Boot output is silenced for a clean greetd login prompt.
+Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-style lid behavior: on AC or when docked the lid close is ignored (clamshell / external-monitor mode); on battery it goes straight to hibernate, writing an image to a swapfile (`resume_offset` configured) to avoid the significant drain of AMD s2idle. A `resume-fix` systemd service rebinds all `xhci_hcd` PCI controllers and reloads `uvcvideo` + `mt7925e` after wake to recover the webcam, USB-C dock and WiFi which die during s2idle. PSR is disabled via `amdgpu.dcdebugmask=0x10` to prevent post-resume DisplayPort flicker on external monitors. Boot output is silenced for a clean greetd login prompt.
 
 ## Desktop
 
@@ -10,11 +10,12 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. Uses `suspe
 |-----------|---------|
 | Compositor | Niri (scrollable tiling Wayland) |
 | Display Manager | greetd + tuigreet (remembers username) |
-| Status Bar | Waybar (with top-left Nix snowflake launcher button, square borders) |
+| Status Bar | Waybar (top-left Nix snowflake launcher, square borders, background tinted from the current wallpaper's dominant color) |
 | Launcher | Rofi (anchored top-left under the bar, square borders) |
 | Notifications | Mako |
-| Screen Lock | Hyprlock + swayidle |
-| Wallpaper | swaybg (with rofi picker) |
+| Polkit Agent | hyprpolkitagent (GUI auth prompts for fprintd, etc.) |
+| Screen Lock | Hyprlock + swayidle (locks at 15 min idle, powers off monitors 5 min after lock) |
+| Wallpaper | swaybg (rofi picker + wallpaper-colorize extracts a dominant color for waybar on each change) |
 | Night Mode | wlsunset (eDP-1 only, 4000K night / 6500K day, 20:00–07:00) |
 | Screenshots | grim + slurp |
 | Clipboard | wl-clipboard + cliphist |
@@ -58,7 +59,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. Uses `suspe
 | Category | Apps |
 |----------|------|
 | Browsers | Google Chrome (VA-API + Vulkan GPU accel), Firefox |
-| Email | Superhuman (PWA) |
+| Email | Proton Mail (desktop), Superhuman (PWA) |
 | Chat | Slack, Teams, Zoom |
 | AI | Claude (PWA) |
 | Notes | Obsidian |
@@ -66,9 +67,9 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. Uses `suspe
 | PDF | zathura (viewer), xournalpp (annotation) |
 | Video | mpv, OBS Studio |
 | Images | imv |
-| Music | Spotify |
+| Music | Spotify, cava (terminal audio visualizer) |
 | Passwords | Bitwarden |
-| Graphics | Graphite (vector editor) |
+| Graphics | Graphite (vector editor), Inkscape (vector editor), GIMP (raster editor) |
 | Code | Zed, Warp Terminal |
 | Gaming | Steam + Gamescope + GameMode |
 
@@ -106,6 +107,7 @@ home/
   helix.nix                     # Editor + LSP setup
   niri.nix                      # Waybar (tailscale, memory, network, bt, audio, battery), rofi, mako, swayidle, hyprlock, wallpaper
   apps.nix                      # Browsers, GUI apps, PWA shortcuts
+  cava.nix                      # Terminal audio visualizer (pipewire input)
   dev.nix                       # CLI dev tools
   git.nix                       # Git config
   ghostty.nix                   # Terminal emulator

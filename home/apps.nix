@@ -87,6 +87,19 @@
       type = "Application";
       categories = [ "Settings" "HardwareSettings" ];
     };
+
+    # Override the package's entry — on niri/Wayland the app only renders
+    # with --ozone-platform=x11 (via XWayland).
+    proton-mail = {
+      name = "Proton Mail";
+      genericName = "Proton Mail";
+      exec = "proton-mail --ozone-platform=x11 %U";
+      icon = "proton-mail";
+      type = "Application";
+      startupNotify = true;
+      categories = [ "Network" "Email" ];
+      mimeType = [ "x-scheme-handler/mailto" ];
+    };
   };
 
   # ── Dev toolchains ──────────────────────────────────
@@ -152,6 +165,7 @@
     warp-terminal
     teams-for-linux
     zoom-us
+    protonmail-desktop
     bitwarden-desktop
     bitwarden-cli
     morgen          # calendar app
@@ -163,6 +177,7 @@
     libreoffice
     prusa-slicer
     inkscape
+    gimp
 
     # terminal launcher for Nautilus "Open With"
     xdg-terminal-exec

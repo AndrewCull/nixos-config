@@ -78,12 +78,13 @@
   services.fprintd.enable = true;
 
   # ── Lid/suspend behavior ──────────────────────────────
-  # This hardware only supports s2idle (no S3 deep sleep), which drains
-  # battery significantly. Use suspend-then-hibernate with a short delay
-  # so the machine hibernates quickly instead of sitting in s2idle.
+  # MacBook-style: on AC or docked, lid close keeps the machine running
+  # (so external monitor / clamshell mode work). On battery, go straight
+  # to hibernate — this hardware only supports s2idle (no S3 deep sleep),
+  # which drains battery fast, so skip s2idle entirely.
   services.logind.settings.Login = {
-    HandleLidSwitch = "suspend-then-hibernate";
-    HandleLidSwitchExternalPower = "suspend-then-hibernate";
+    HandleLidSwitch = "hibernate";
+    HandleLidSwitchExternalPower = "ignore";
     HandleLidSwitchDocked = "ignore";
     InhibitDelayMaxSec = 5;
   };

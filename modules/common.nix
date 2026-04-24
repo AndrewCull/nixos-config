@@ -136,6 +136,10 @@
     enable = true;
     image = ./wallpaper.png;
     polarity = "dark";
+    # Explicit scheme — the current wallpaper is near-monochrome dark, so
+    # Stylix's image-derived palette collapses to a narrow band (text ends
+    # up dark-on-dark, icons invisible). Swap to a more colourful wallpaper
+    # and remove this line to let the palette track the image again.
     base16Scheme = "${pkgs.base16-schemes}/share/themes/gruvbox-dark-medium.yaml";
 
     fonts = {

@@ -40,12 +40,42 @@ let
     } | rofi -dmenu -p "Keybindings" -i -no-custom -theme-str 'window {width: 50%;}'
   '';
 
+  wallpaper-colorize = pkgs.writeShellScriptBin "wallpaper-colorize" ''
+    wp="''${1:-$(cat "$HOME/.config/current-wallpaper" 2>/dev/null)}"
+    [ -f "$wp" ] || exit 0
+    out="$HOME/.cache/waybar/wallpaper.css"
+    mkdir -p "$(dirname "$out")"
+    hex=$(${pkgs.imagemagick}/bin/magick "$wp" -resize 200x200 -colors 5 -depth 8 -format "%c" histogram:info: \
+      | sort -rn \
+      | ${pkgs.gawk}/bin/awk 'NR==1 { for (i=1;i<=NF;i++) if ($i ~ /^#[0-9A-Fa-f]{6}/) { print substr($i,1,7); exit } }')
+    [ -z "$hex" ] && exit 0
+    r=$((16#''${hex:1:2}))
+    g=$((16#''${hex:3:2}))
+    b=$((16#''${hex:5:2}))
+    # Cap brightest channel at ~80/255 so light-dominant wallpapers still
+    # produce a dim bar where light text/icons stay readable. Dark wallpapers
+    # pass through unchanged, preserving their natural hue.
+    max=$r
+    [ $g -gt $max ] && max=$g
+    [ $b -gt $max ] && max=$b
+    if [ "$max" -gt 80 ]; then
+      r=$(( r * 80 / max ))
+      g=$(( g * 80 / max ))
+      b=$(( b * 80 / max ))
+    fi
+    printf 'window#waybar { background-color: rgba(%d, %d, %d, 0.92); }\n' "$r" "$g" "$b" > "$out"
+    ${pkgs.procps}/bin/pkill -SIGUSR2 waybar 2>/dev/null || true
+  '';
+
   wallpaper-launch = pkgs.writeShellScriptBin "wallpaper-launch" ''
     state="$HOME/.config/current-wallpaper"
     fallback="$HOME/wallpaper.jpg"
     wp=$(cat "$state" 2>/dev/null)
     [ ! -f "$wp" ] && wp="$fallback"
-    [ -f "$wp" ] && exec swaybg -m fill -i "$wp"
+    if [ -f "$wp" ]; then
+      ${wallpaper-colorize}/bin/wallpaper-colorize "$wp" || true
+      exec swaybg -m fill -i "$wp"
+    fi
   '';
 
   wallpaper-pick = pkgs.writeShellScriptBin "wallpaper-pick" ''
@@ -63,6 +93,7 @@ let
     pkill swaybg 2>/dev/null; sleep 0.1
     swaybg -m fill -i "$dir/$selected" &
     disown
+    ${wallpaper-colorize}/bin/wallpaper-colorize "$dir/$selected" || true
   '';
 
   mic-mute-toggle = pkgs.writeShellScriptBin "mic-mute-toggle" ''
@@ -105,11 +136,19 @@ let
     pkill swaybg 2>/dev/null; sleep 0.1
     swaybg -m fill -i "''${files[$next_idx]}" &
     disown
+    ${wallpaper-colorize}/bin/wallpaper-colorize "''${files[$next_idx]}" || true
   '';
 in
 {
   xdg.configFile."niri/config.kdl".source = ../confs/niri/config.kdl;
   xdg.configFile."hypr/hyprlock.conf".source = ../confs/hyprlock.conf;
+
+  # Ensure the runtime-generated waybar wallpaper colors file exists so
+  # waybar's @import doesn't fail on first boot.
+  home.activation.waybarWallpaperCss = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run mkdir -p $HOME/.cache/waybar
+    [ -f $HOME/.cache/waybar/wallpaper.css ] || run touch $HOME/.cache/waybar/wallpaper.css
+  '';
 
   home.packages = with pkgs; [
     # bar
@@ -144,19 +183,24 @@ in
     wlr-randr
     xwayland-satellite
 
+    # polkit auth agent (GUI password prompts for fprintd enrol, etc.)
+    hyprpolkitagent
+
     # scripts
     power-menu
     keybinds-cheat
     wallpaper-launch
     wallpaper-pick
     wallpaper-next
+    wallpaper-colorize
     mic-mute-toggle
   ];
 
   # ── Waybar ──────────────────────────────────────────
   programs.waybar = {
     enable = true;
-    style = ''
+    style = with config.lib.stylix.colors; ''
+      @import "${config.home.homeDirectory}/.cache/waybar/wallpaper.css";
       * {
         font-size: 14px;
       }
@@ -175,7 +219,7 @@ in
         font-size: 24px;
         margin: 3px 12px 3px 8px;
         padding: 0 10px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        border: 1px solid #${base03};
         border-radius: 0;
       }
     '';
@@ -420,17 +464,34 @@ in
     };
   };
 
+  # ── Polkit auth agent ───────────────────────────────
+  systemd.user.services.hyprpolkitagent = {
+    Unit = {
+      Description = "Hyprland Polkit authentication agent";
+      PartOf = [ "graphical-session.target" ];
+      After = [ "graphical-session.target" ];
+    };
+    Service = {
+      Type = "simple";
+      ExecStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent";
+      Restart = "on-failure";
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
+  };
+
   # ── Swayidle ────────────────────────────────────────
   services.swayidle = {
     enable = true;
     timeouts = [
       {
         timeout = 900;
-        command = "${pkgs.procps}/bin/pgrep -x hyprlock || ${pkgs.hyprlock}/bin/hyprlock";
-      }
-      {
-        timeout = 1200;
-        command = "${pkgs.niri}/bin/niri msg action power-off-monitors";
+        command = toString (pkgs.writeShellScript "lock-then-sleep-screen" ''
+          ${pkgs.procps}/bin/pgrep -x hyprlock || ${pkgs.hyprlock}/bin/hyprlock &
+          sleep 300
+          if ${pkgs.procps}/bin/pgrep -x hyprlock > /dev/null; then
+            ${pkgs.niri}/bin/niri msg action power-off-monitors
+          fi
+        '');
       }
     ];
     events = {
