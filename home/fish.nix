@@ -50,11 +50,13 @@
 
       # ssh — load key from bitwarden vault
       ssh-unlock = ''
+        set -x NODE_NO_WARNINGS 1
         bw unlock --check &>/dev/null; or bw login
         set -x BW_SESSION (bw unlock --raw)
         set -l tmpask (mktemp)
         begin
           echo "#!/bin/sh"
+          echo "export NODE_NO_WARNINGS=1"
           echo "export BW_SESSION=$BW_SESSION"
           echo "bw get password 'SSH GitHub'"
         end > $tmpask

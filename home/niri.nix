@@ -158,18 +158,12 @@ let
   '';
 in
 {
+  # niri-flake's home-manager module auto-generates a config.kdl from
+  # programs.niri.settings. We keep the raw kdl, so disable generation.
+  programs.niri.config = null;
+
   xdg.configFile."niri/config.kdl".source = ../confs/niri/config.kdl;
   xdg.configFile."hypr/hyprlock.conf".source = ../confs/hyprlock.conf;
-
-  # Seed the runtime waybar style that niri launches with, so waybar can come
-  # up before any wallpaper has been picked. waybar-launcher re-seeds it at
-  # runtime too; this just covers the first boot after activation.
-  home.activation.waybarRuntimeStyle = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    run mkdir -p $HOME/.cache/waybar
-    if [ ! -s $HOME/.cache/waybar/style.css ]; then
-      run sh -c 'printf ''\''@import "%s";\n''\'' "$HOME/.config/waybar/style.css" > "$HOME/.cache/waybar/style.css"'
-    fi
-  '';
 
   home.packages = with pkgs; [
     # bar
@@ -223,7 +217,7 @@ in
     enable = true;
     style = with config.lib.stylix.colors; ''
       * {
-        font-size: 14px;
+        font-size: 13px;
       }
       #workspaces button.active {
         border-radius: 0;
@@ -237,9 +231,9 @@ in
         margin: 0 4px;
       }
       #custom-launcher {
-        font-size: 24px;
-        margin: 3px 12px 3px 8px;
-        padding: 0 10px;
+        font-size: 18px;
+        margin: 2px 10px 2px 6px;
+        padding: 0 8px;
         border: 1px solid #${base03};
         border-radius: 0;
       }
@@ -248,7 +242,7 @@ in
       mainBar = {
         layer = "top";
         position = "top";
-        height = 28;
+        height = 22;
         modules-left = [ "custom/launcher" "niri/workspaces" ];
         modules-center = [ "clock" ];
         modules-right = [
@@ -470,7 +464,7 @@ in
       location = 1;   # north-west
       anchor = 1;     # north-west
       x-offset = 0;
-      y-offset = 28;  # matches waybar height
+      y-offset = 22;  # matches waybar height
     };
   };
 

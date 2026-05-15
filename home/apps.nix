@@ -5,15 +5,14 @@
   programs.google-chrome = {
     enable = true;
     commandLineArgs = [
-      "--ozone-platform-hint=auto"
-      "--enable-features=VaapiVideoDecodeLinuxGL,VaapiVideoEncoder,VaapiIgnoreDriverChecks,VulkanFromANGLE,DefaultANGLEVulkan,Vulkan"
+      "--ozone-platform=wayland"
+      # GL-based VAAPI path — avoids the Vulkan/ANGLE combo that silently
+      # falls back to software decode on AMD.
+      "--enable-features=VaapiVideoDecoder,VaapiVideoEncoder,AcceleratedVideoDecodeLinuxGL"
       "--disable-features=UseChromeOSDirectVideoDecoder"
-      "--use-vulkan"
-      "--use-angle=vulkan"
+      "--ignore-gpu-blocklist"
       "--enable-gpu-rasterization"
       "--enable-zero-copy"
-      "--ignore-gpu-blocklist"
-      "--canvas-oop-rasterization"
       "--disable-background-networking"
       "--disable-backgrounding-occluded-windows"
     ];
@@ -88,6 +87,14 @@
       categories = [ "Settings" "HardwareSettings" ];
     };
 
+    x-plane-12 = {
+      name = "X-Plane 12";
+      exec = "xplane-run";
+      icon = "applications-games";
+      type = "Application";
+      categories = [ "Game" "Simulation" ];
+    };
+
     # Override the package's entry — on niri/Wayland the app only renders
     # with --ozone-platform=x11 (via XWayland).
     proton-mail = {
@@ -117,13 +124,49 @@
         install -Dm755 cli_v${version} $out/bin/render
       '';
     };
+
+    # X-Plane 12 ships its own CEF/Chromium and needs a full Linux desktop
+    # runtime. Build a comprehensive FHS env (steam-run's helper closure
+    # turned out to be too thin — only ~13 surface packages).
+    xplane-run = pkgs.buildFHSEnv {
+      name = "xplane-run";
+      targetPkgs = p: with p; [
+        # base
+        bashInteractive coreutils glibc zlib
+        # graphics
+        libGL libglvnd vulkan-loader libgbm mesa libdrm
+        # X11
+        libx11 libxext libxi libxcursor libxrandr
+        libxxf86vm libxinerama libxfixes libxrender
+        libxscrnsaver libxcomposite libxdamage libxtst
+        libxcb libxshmfence libxt libice libsm
+        libxkbcommon
+        # audio
+        alsa-lib libpulseaudio pipewire
+        # CEF / Chromium runtime
+        nss nspr
+        gtk3 glib gobject-introspection
+        pango cairo atk at-spi2-atk at-spi2-core
+        cups dbus expat fontconfig freetype
+        harfbuzz gdk-pixbuf
+        libnotify libsecret libxslt sqlite icu
+        # X-Plane Identity Login uses WebKitGTK 4.1
+        webkitgtk_4_1
+        # misc
+        udev libuuid libcap stdenv.cc.cc.lib
+        curl openssl
+      ];
+      runScript = ''
+        bash -c 'cd "/home/andrew/Games/X-Plane 12" && exec ./X-Plane-x86_64 "$@"'
+      '';
+    };
   in [
     # rust — individual packages instead of rustup to avoid NixOS friction
     # (managed by nixpkgs unstable, so always near-latest stable)
 
     # node + claude code
     nodejs_22
-    nodePackages.pnpm
+    pnpm
 
     # databases
     postgresql  # psql client
@@ -181,6 +224,10 @@
 
     # terminal launcher for Nautilus "Open With"
     xdg-terminal-exec
+
+    # FHS env for running non-Nix binaries (X-Plane installer, etc.)
+    steam-run
+    xplane-run
 
     # recording
     obs-studio

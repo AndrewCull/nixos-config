@@ -57,6 +57,16 @@ output "PNP(BNQ) BenQ RD280UG EMDBS00199087" {
     focus-at-startup
 }
 
+// BenQ RD320U (home) — sits above the laptop panel, horizontally centered
+// over it. Laptop is at x=2560, logical width 1536; this monitor is logical
+// 3072 wide, so x = 2560 - (3072-1536)/2 = 1792. y = -1728 (its logical height).
+output "PNP(BNQ) BenQ RD320U L8S0025307C" {
+    mode "3840x2160@60.000"
+    scale 1.25
+    position x=1792 y=-1728
+    focus-at-startup
+}
+
 spawn-at-startup "xwayland-satellite"
 spawn-at-startup "waybar-launcher"
 spawn-at-startup "mako"

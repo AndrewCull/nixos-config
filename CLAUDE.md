@@ -25,8 +25,8 @@ nix-collect-garbage -d
 ## Architecture
 
 **flake.nix** is the entry point. It wires together:
-- **Flake inputs**: nixpkgs (unstable), home-manager, niri-flake, stylix
-- **Shared modules** applied to all hosts: `modules/common.nix`, `modules/niri.nix`, plus niri-flake, home-manager, and stylix
+- **Flake inputs**: nixpkgs (unstable), home-manager, stylix, sops-nix, niri-flake
+- **Shared modules** applied to all hosts: `modules/common.nix`, `modules/niri.nix`, `modules/hhkb.nix`, plus niri-flake (`niri.nixosModules.niri`), sops-nix, stylix, home-manager
 - **Host-specific config** in `hosts/<hostname>/` (hardware + per-machine overrides)
 
 **modules/** — System-level NixOS modules:
@@ -48,7 +48,7 @@ nix-collect-garbage -d
 - The config lives at `/etc/nixos-config` (or `~/nixos-config` via alias)
 - Home-manager uses `useGlobalPkgs` and `useUserPackages` — packages come from the system nixpkgs
 - `home/default.nix` auto-imports all sibling `.nix` files; no need to manually add imports when creating new home modules
-- `stateVersion` is `"24.11"` — do not change this
+- `stateVersion` is `"26.05"` — only bump deliberately, with state migrations handled (e.g. Firefox profile path moved to `$XDG_CONFIG_HOME/mozilla/firefox`)
 
 ## Rules
 

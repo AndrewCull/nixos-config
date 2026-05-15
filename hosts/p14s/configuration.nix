@@ -65,7 +65,7 @@
   # powertop is still available as a package for manual inspection
   powerManagement.powertop.enable = false;
 
-  environment.systemPackages = with pkgs; [ powertop lm_sensors ];
+  environment.systemPackages = with pkgs; [ powertop lm_sensors libva-utils ];
 
   # ── Steam ────────────────────────────────────────
   programs.steam = {
@@ -90,10 +90,10 @@
   };
 
   # ── Suspend reliability ─────────────────────────────
-  systemd.sleep.extraConfig = ''
-    SuspendState=mem
-    HibernateDelaySec=120
-  '';
+  systemd.sleep.settings.Sleep = {
+    SuspendState = "mem";
+    HibernateDelaySec = 120;
+  };
 
   # Reload MT7925 WiFi driver and rebind xHCI USB controllers on resume.
   # After s2idle the xHCI controllers that host the webcam and USB-C dock

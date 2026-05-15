@@ -12,13 +12,23 @@
   boot.consoleLogLevel = 0;
   boot.kernelParams = [ "quiet" "udev.log_level=3" ];
 
+  # NXP NCI NFC chip generates a runaway i2c interrupt storm (IRQ pegs one
+  # core ~15%, fans spin up, niri startup stalled ~47s during DRM init).
+  # Unused on this machine — blacklist the whole NFC stack.
+  boot.blacklistedKernelModules = [ "nxp_nci_i2c" "nxp_nci" "nci" "nfc" ];
+
   # ── Networking ────────────────────────────────────────
   networking.networkmanager.enable = true;
   networking.firewall.enable = true;
   networking.firewall.allowedTCPPorts = [ 8081 ];
 
   # ── Tailscale ─────────────────────────────────────────
-  services.tailscale.enable = true;
+  # useRoutingFeatures = "client" enables proper exit-node usage
+  # (Mullvad add-on or self-hosted exit nodes) — handles routing/MTU.
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "client";
+  };
   networking.firewall.trustedInterfaces = [ "tailscale0" ];
 
   # ── Locale ────────────────────────────────────────────
@@ -119,6 +129,15 @@
   hardware.enableAllFirmware = true;
   services.fwupd.enable = true;
 
+  # ── USB quirks ────────────────────────────────────────
+  # BenQ monitor's Realtek hub mis-enumerates under USB-C + PD load and
+  # the resulting bus turbulence resets the MediaTek BT radio, dropping
+  # the HHKB + mouse. Pin autosuspend off on both so BT survives the storm.
+  services.udev.extraRules = ''
+    ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0bda", ATTR{idProduct}=="5420", TEST=="power/control", ATTR{power/control}="on"
+    ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0e8d", ATTR{idProduct}=="e025", TEST=="power/control", ATTR{power/control}="on"
+  '';
+
   # ── nix-ld (for non-nix binaries) ────────────────────
   programs.nix-ld.enable = true;
 
@@ -144,8 +163,8 @@
 
     fonts = {
       sansSerif = {
-        package = pkgs.jetbrains-mono;
-        name = "JetBrains Mono";
+        package = pkgs.inter;
+        name = "Inter";
       };
       monospace = {
         package = pkgs.nerd-fonts.jetbrains-mono;
@@ -174,5 +193,5 @@
     targets.gnome.enable = false;
   };
 
-  system.stateVersion = "24.11";
+  system.stateVersion = "26.05";
 }

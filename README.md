@@ -22,7 +22,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 | Theme | Gruvbox Dark Medium (via Stylix) |
 | Icons | Papirus-Dark |
 | Cursor | phinger-cursors-light |
-| Fonts | JetBrains Mono (UI + terminal, Nerd Font variant) |
+| Fonts | Inter (sans-serif) + JetBrains Mono Nerd Font (monospace/terminal) |
 
 ## Terminal & Shell
 
@@ -58,7 +58,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 
 | Category | Apps |
 |----------|------|
-| Browsers | Google Chrome (VA-API + Vulkan GPU accel), Firefox |
+| Browsers | Google Chrome (Wayland + VA-API hardware video decode/encode), Firefox |
 | Email | Proton Mail (desktop), Superhuman (PWA) |
 | Chat | Slack, Teams, Zoom |
 | AI | Claude (PWA) |
@@ -71,13 +71,13 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 | Passwords | Bitwarden |
 | Graphics | Graphite (vector editor), Inkscape (vector editor), GIMP (raster editor) |
 | Code | Zed, Warp Terminal |
-| Gaming | Steam + Gamescope + GameMode |
+| Gaming | Steam + Gamescope + GameMode, X-Plane 12 (via custom `xplane-run` FHS env) |
 
 ## System Services
 
 | Service | Purpose |
 |---------|---------|
-| Tailscale + Trayscale | VPN / mesh networking + GUI control |
+| Tailscale + Trayscale | Mesh networking (work tailnet incl. Render) + GUI control. Configured as exit-node client (`useRoutingFeatures = "client"`) so Mullvad add-on or self-hosted exit nodes route general internet traffic while tailnet peers stay reachable. |
 | ngrok | Tunnel local servers for demos |
 | PipeWire | Audio (with PulseAudio compat) |
 | TLP | Laptop power management (USB autosuspend disabled — kills xHCI on resume) |
