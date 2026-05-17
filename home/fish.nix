@@ -8,7 +8,6 @@
       cd = "z";
 
       # nix
-      rebuild = "sudo nixos-rebuild switch --flake /etc/nixos-config#(hostname)";
       update = "nix flake update /etc/nixos-config";
 
       # git
@@ -38,6 +37,9 @@
     };
 
     functions = {
+      # nixos-rebuild for the current host
+      rebuild = "sudo nixos-rebuild switch --flake /etc/nixos-config#(hostname) $argv";
+
       # yazi — cd to last dir on exit
       y = ''
         set tmp (mktemp -t "yazi-cwd.XXXXXX")

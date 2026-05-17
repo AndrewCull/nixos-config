@@ -77,7 +77,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 
 | Service | Purpose |
 |---------|---------|
-| Tailscale + Trayscale | Mesh networking (work tailnet incl. Render) + GUI control. Configured as exit-node client (`useRoutingFeatures = "client"`) so Mullvad add-on or self-hosted exit nodes route general internet traffic while tailnet peers stay reachable. |
+| Tailscale + Trayscale | Mesh networking (work tailnet incl. Render) + GUI control. Configured as exit-node client (`useRoutingFeatures = "client"`) so Mullvad add-on or self-hosted exit nodes route general internet traffic while tailnet peers stay reachable. Tailscale SSH enabled (`--ssh --operator=andrew`): SSH between tailnet peers is ACL-authed, no key management. |
 | ngrok | Tunnel local servers for demos |
 | PipeWire | Audio (with PulseAudio compat) |
 | TLP | Laptop power management (USB autosuspend disabled — kills xHCI on resume) |

@@ -14,10 +14,10 @@
     enable = true;
     enable32Bit = true;
   };
-  hardware.amdgpu.opencl.enable = true;
+#  hardware.amdgpu.opencl.enable = true;
 
   # btrfs needs this in initrd for root mount
-  boot.supportedFilesystems = [ "btrfs" ];
+#  boot.supportedFilesystems = [ "btrfs" ];
 
   # ── Steam / gaming ────────────────────────────────────
   programs.steam = {
@@ -30,12 +30,15 @@
   sops.defaultSopsFile = ../../secrets/secrets.yaml;
   sops.age.keyFile = "/var/lib/sops-nix/key.txt";
 
-  sops.secrets.andrew-password.neededForUsers = true;
+  # After re-encrypting secrets.yaml on p14s with `sops updatekeys`,
+  # pull and uncomment these two lines + remove `initialPassword` below.
+#  sops.secrets.andrew-password.neededForUsers = true;
 
   # -- User --
   users.users.andrew = {
     isNormalUser = true;
     extraGroups = [ "wheel" "video" "audio" "networkmanager" ];
-    hashedPasswordFile = config.sops.secrets.andrew-password.path;
+    initialPassword = "changeme";
+#   hashedPasswordFile = config.sops.secrets.andrew-password.path;
   };
 }

@@ -152,12 +152,24 @@
         libnotify libsecret libxslt sqlite icu
         # X-Plane Identity Login uses WebKitGTK 4.1
         webkitgtk_4_1
+        # gamemode (libgamemodeauto.so + gamemoderun)
+        gamemode
         # misc
         udev libuuid libcap stdenv.cc.cc.lib
         curl openssl
       ];
       runScript = ''
-        bash -c 'cd "/home/andrew/Games/X-Plane 12" && exec ./X-Plane-x86_64 "$@"'
+        bash -c '
+          cd "/home/andrew/Games/X-Plane 12"
+          # Force RADV (open-source Mesa Vulkan driver) on AMD
+          export AMD_VULKAN_ICD=RADV
+          # gpl = Graphics Pipeline Library, reduces shader compile stutter
+          export RADV_PERFTEST=gpl
+          # Mesa: cache shaders so cold-start stutter only happens once
+          export MESA_SHADER_CACHE_DIR="$HOME/.cache/mesa_shader_cache"
+          mkdir -p "$MESA_SHADER_CACHE_DIR"
+          exec gamemoderun ./X-Plane-x86_64 "$@"
+        '
       '';
     };
   in [

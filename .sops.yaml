@@ -1,8 +1,10 @@
 keys:
   - &p14s age1njhe0q6klhl6efx6hc7j7u55muh3qxpy8uf5jh7ep2ekdg33wdrs6vjeqf
+  - &darkstar age1dzwqv9a8s5pf4cjm27gp8fa0tlu8z0sjvxpsqluunj65u4e7hfeqqw7lx4
 
 creation_rules:
   - path_regex: secrets/.*\.yaml$
     key_groups:
       - age:
           - *p14s
+          - *darkstar

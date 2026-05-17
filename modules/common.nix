@@ -25,9 +25,13 @@
   # ── Tailscale ─────────────────────────────────────────
   # useRoutingFeatures = "client" enables proper exit-node usage
   # (Mullvad add-on or self-hosted exit nodes) — handles routing/MTU.
+  # --ssh: Tailscale serves SSH on the tailnet interface, ACL-authed,
+  #        no key management. --operator: lets `andrew` run `tailscale`
+  #        CLI without sudo.
   services.tailscale = {
     enable = true;
     useRoutingFeatures = "client";
+    extraUpFlags = [ "--ssh" "--operator=andrew" ];
   };
   networking.firewall.trustedInterfaces = [ "tailscale0" ];
 
