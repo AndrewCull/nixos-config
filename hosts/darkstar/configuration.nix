@@ -26,6 +26,8 @@
   };
   programs.gamemode.enable = true;
 
+  environment.systemPackages = with pkgs; [ unigine-superposition ];
+
   # -- Secrets --
   sops.defaultSopsFile = ../../secrets/secrets.yaml;
   sops.age.keyFile = "/var/lib/sops-nix/key.txt";

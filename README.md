@@ -72,6 +72,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 | Graphics | Graphite (vector editor), Inkscape (vector editor), GIMP (raster editor) |
 | Code | Zed, Warp Terminal |
 | Gaming | Steam + Gamescope + GameMode, X-Plane 12 (via custom `xplane-run` FHS env) |
+| Benchmarks | Unigine Superposition (GPU benchmark, darkstar only) |
 
 ## System Services
 
