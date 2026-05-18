@@ -80,7 +80,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 | Tailscale + Trayscale | Mesh networking (work tailnet incl. Render) + GUI control. Configured as exit-node client (`useRoutingFeatures = "client"`) so Mullvad add-on or self-hosted exit nodes route general internet traffic while tailnet peers stay reachable. |
 | ngrok | Tunnel local servers for demos |
 | PipeWire | Audio (with PulseAudio compat) |
-| TLP | Laptop power management (USB autosuspend disabled — kills xHCI on resume) |
+| TLP | Laptop power management (`amd-pstate-epp` driver: `powersave` governor on AC + BAT — the *dynamic* governor in active mode; AC uses `balance_performance` EPP, BAT uses `power`. USB autosuspend disabled — kills xHCI on resume) |
 | thermald | Thermal management |
 | fprintd | Fingerprint authentication (disabled for greetd and hyprlock — fprintd timeouts blocked password entry) |
 | Docker | Container runtime (auto-prune) |
