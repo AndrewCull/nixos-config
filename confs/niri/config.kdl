@@ -2,6 +2,7 @@ input {
     keyboard {
         repeat-delay 250
         repeat-rate 35
+        numlock
     }
 
     touchpad {
@@ -17,6 +18,7 @@ input {
 layout {
     gaps 8
     center-focused-column "never"
+    always-center-single-column
 
     preset-column-widths {
         proportion 0.33333
@@ -62,7 +64,12 @@ output "PNP(BNQ) BenQ RD280UG EMDBS00199087" {
 // 3072 wide, so x = 2560 - (3072-1536)/2 = 1792. y = -1728 (its logical height).
 output "PNP(BNQ) BenQ RD320U L8S0025307C" {
     mode "3840x2160@60.000"
-    scale 1.25
+    // Native 4K at integer scale 1.0 — pixel-perfect, full 3840x2160 logical
+    // workspace (no fractional resampling). Font sizes are bumped ~25% on
+    // darkstar (the only host this monitor attaches to) so text keeps its
+    // physical size from the old scale 1.25. See hosts/darkstar/configuration
+    // and the home niri / ghostty modules.
+    scale 1.0
     position x=1792 y=-1728
     focus-at-startup
 }
@@ -90,7 +97,7 @@ window-rule {
     match app-id=r#"chromium-browser"#
     match app-id=r#"google-chrome"#
     match app-id=r#"firefox"#
-    default-column-width { proportion 1.0; }
+    default-column-width { proportion 0.5; }
 }
 
 cursor {

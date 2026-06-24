@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, osConfig, ... }:
 
 {
   programs.ghostty = {
@@ -9,7 +9,9 @@
     settings = {
       command = "${config.programs.fish.package}/bin/fish";
       font-family = "JetBrainsMono Nerd Font Mono";
-      font-size = 11;
+      # darkstar's RD320U is native 4K at niri scale 1.0; bump ~25% so text
+      # keeps its physical size. Other hosts (scaled displays) stay at 11.
+      font-size = if osConfig.networking.hostName == "darkstar" then 14 else 11;
 
       window-decoration = false;
       window-padding-x = 5;

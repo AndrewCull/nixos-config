@@ -58,7 +58,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 
 | Category | Apps |
 |----------|------|
-| Browsers | Google Chrome (Wayland + VA-API hardware video decode/encode), Firefox |
+| Browsers | Google Chrome (Wayland + VA-API hardware video decode/encode; on darkstar forced to `--force-device-scale-factor=1.25` so its UI keeps physical size at the RD320U's native-4K niri scale 1.0), Firefox |
 | Email | Proton Mail (desktop), Superhuman (PWA) |
 | Chat | Slack, Teams, Zoom |
 | AI | Claude (PWA) |
@@ -72,7 +72,6 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 | Graphics | Graphite (vector editor), Inkscape (vector editor), GIMP (raster editor) |
 | Code | Zed, Warp Terminal |
 | Gaming | Steam + Gamescope + GameMode, X-Plane 12 (via custom `xplane-run` FHS env) |
-| Benchmarks | Unigine Superposition (GPU benchmark, darkstar only) |
 
 ## System Services
 
@@ -90,6 +89,8 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 | fwupd | Firmware updates |
 | AppImage | `programs.appimage` with binfmt — run `.AppImage` files directly |
 | i2c | `hardware.i2c.enable` + user in `i2c` group — DDC/CI access for external monitor tools (e.g. BenQ Display Pilot 2) |
+| OpenRGB | RGB lighting control for the Sapphire RX 9070 (darkstar only) — `motherboard = "amd"` loads the I2C modules needed to reach the GPU's controller. Set a profile in the GUI, then point `startupProfile` at it to auto-apply on boot. |
+| GPU diagnostics | `glxinfo` (mesa-demos) and `vulkaninfo` (vulkan-tools) for OpenGL/Vulkan renderer sanity checks (darkstar only) |
 | Blueman | Bluetooth management |
 | GNOME Keyring | Secret storage (auto-unlocks on password login) |
 
@@ -101,12 +102,13 @@ modules/
   common.nix                    # Boot, networking, users, nix settings, pipewire, stylix
   niri.nix                      # Niri compositor, greetd, portals, bluetooth
   hhkb.nix                      # HHKB keyboard layer (media/nav keys via keyd)
+  mxkeys.nix                    # Logitech MX Keys: Cmd → Super remap (via keyd)
   docker.nix                    # Docker daemon (opt-in per host)
 home/
   default.nix                   # Auto-imports all .nix files in this directory
   fish.nix                      # Shell config and aliases
   helix.nix                     # Editor + LSP setup
-  niri.nix                      # Waybar (tailscale, memory, network, bt, audio, battery), rofi, mako, swayidle, hyprlock, wallpaper
+  niri.nix                      # Waybar (tailscale, memory, network, bt, audio, battery — battery omitted on darkstar, a desktop with none), rofi, mako, swayidle, hyprlock, wallpaper
   apps.nix                      # Browsers, GUI apps, PWA shortcuts
   cava.nix                      # Terminal audio visualizer (pipewire input)
   dev.nix                       # CLI dev tools
@@ -123,7 +125,7 @@ hosts/
 secrets/
   secrets.yaml                  # Encrypted secrets (sops-nix + age)
 confs/
-  niri/config.kdl               # Niri keybindings and layout
+  niri/config.kdl               # Niri keybindings and layout (numlock enabled at startup)
   hyprlock.conf                 # Lock screen appearance
 templates/
   rust-nextjs-flake.nix         # Dev shell template: Rust + Next.js + Docker

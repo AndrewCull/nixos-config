@@ -81,6 +81,9 @@
   programs.fish.enable = true;
 
   nixpkgs.config.allowUnfree = true;
+  # Obsidian/Proton Mail track Electron slowly; 39.8.10 went EOL upstream but
+  # the apps still work. Revisit when they bump to a supported Electron.
+  nixpkgs.config.permittedInsecurePackages = [ "electron-39.8.10" ];
 
   # ── Security ──────────────────────────────────────────
   security.polkit.enable = true;

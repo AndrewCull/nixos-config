@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, ... }:
+{ config, pkgs, lib, inputs, ... }:
 
 {
   # niri-flake overlay exposes pkgs.niri-stable and pkgs.niri-unstable.
@@ -20,6 +20,11 @@
   # niri WM — system-level settings
   programs.niri.enable = true;
   programs.niri.package = pkgs.niri-stable;
+
+  # niri-flake auto-enables polkit-kde-authentication-agent as a user service.
+  # We run hyprpolkitagent from home/niri.nix instead; the two fight over the
+  # polkit subject and the kde one crash-loops. Disable it.
+  systemd.user.services.niri-flake-polkit.enable = lib.mkForce false;
 
   # Display manager
   services.greetd = {
