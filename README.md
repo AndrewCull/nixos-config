@@ -270,6 +270,7 @@ All keybindings use `Mod` (Super/Windows key). Press `Mod+Shift+/` to open the k
 | `lt` | `eza -la --icons --tree --level=2` |
 | `cat` | `bat` |
 | `cd` | `z` (zoxide) |
+| `netcheck [host]` | Split WiFi-link vs upstream-internet health check (signal, latency, packet loss) — tells at a glance whether a video stutter is local WiFi or the Starlink uplink |
 
 ## License
 

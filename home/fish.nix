@@ -70,6 +70,50 @@
       # multi-line helpers
       cdc = "mkdir -p $argv && cd $argv";
       cdb = "for i in (seq 1 $argv); cd ..; end";
+
+      # netcheck — split WiFi link vs upstream internet health, to tell at a
+      # glance whether a video stutter is local WiFi or the Starlink uplink.
+      # Gateway = router/Starlink dish (should be a few ms); Internet = the
+      # satellite hop. Usage: `netcheck` or `netcheck <host>`.
+      netcheck = ''
+        set -l count 10
+        set -l target 8.8.8.8
+        test -n "$argv[1]"; and set target $argv[1]
+
+        set_color cyan; echo "── netcheck ──"; set_color normal
+
+        # WiFi link quality (signal + negotiated rate)
+        set -l w (nmcli -t -f IN-USE,SSID,SIGNAL,RATE dev wifi 2>/dev/null | string match -r '^\*.*')
+        if test -n "$w"
+            set -l p (string split ':' -- $w)
+            echo "WiFi     : $p[2]  ·  signal $p[3]/100  ·  $p[4]"
+        end
+
+        # gateway = your router / Starlink dish; target = the wider internet
+        set -l gw (ip route 2>/dev/null | awk '/^default/{print $3; exit}')
+
+        for pair in "Gateway $gw" "Internet $target"
+            set -l label (string split ' ' -- $pair)[1]
+            set -l host (string split ' ' -- $pair)[2]
+            test -z "$host"; and continue
+            set -l out (ping -c $count -i 0.2 -W 1 $host 2>/dev/null | string collect)
+            set -l loss (echo $out | grep -oE '[0-9.]+% packet loss' | grep -oE '^[0-9.]+')
+            set -l avg (echo $out | awk -F'/' '/rtt|round-trip/{printf "%.0f", $5}')
+
+            set -l verdict
+            if test -z "$avg"
+                set_color red; set verdict "✗ unreachable"
+            else if test -n "$loss"; and test "$loss" != "0"
+                set_color yellow; set verdict "⚠ $loss% loss"
+            else if test "$avg" -gt 150
+                set_color yellow; set verdict "⚠ high latency"
+            else
+                set_color green; set verdict "✓ ok"
+            end
+            printf "%-9s: %4s ms   loss %-4s  %s\n" $label "$avg" "$loss%" "$verdict"
+            set_color normal
+        end
+      '';
     };
 
     interactiveShellInit = ''
