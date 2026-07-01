@@ -1,1 +1,0 @@
-/home/andrew/code/agema_os/os-cli/target/release/os
