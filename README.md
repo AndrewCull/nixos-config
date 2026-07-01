@@ -2,7 +2,7 @@
 
 Flake-based NixOS system configuration using nixpkgs unstable, [Niri](https://github.com/YaLTeR/niri) (scrollable tiling Wayland compositor), and [Stylix](https://github.com/danth/stylix) (Gruvbox Dark Medium, dark polarity — image-derived palette is wired up but disabled while the wallpaper is near-monochrome). Secrets managed with [sops-nix](https://github.com/Mic92/sops-nix).
 
-Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-style lid behavior: on AC or when docked the lid close is ignored (clamshell / external-monitor mode); on battery it goes straight to hibernate, writing an image to a swapfile (`resume_offset` configured) to avoid the significant drain of AMD s2idle. A `resume-fix` systemd service rebinds all `xhci_hcd` PCI controllers and reloads `uvcvideo` + `mt7925e` after wake to recover the webcam, USB-C dock and WiFi which die during s2idle. PSR is disabled via `amdgpu.dcdebugmask=0x10` to prevent post-resume DisplayPort flicker on external monitors. Boot output is silenced for a clean greetd login prompt.
+Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-style lid behavior: on AC or when docked the lid close is ignored (clamshell / external-monitor mode); on battery it goes straight to hibernate, writing an image to a swapfile (`resume_offset` configured) to avoid the significant drain of AMD s2idle. A `resume-fix` systemd service rebinds all `xhci_hcd` PCI controllers and reloads `uvcvideo` + `mt7925e` after wake to recover the webcam, USB-C dock and WiFi which die during s2idle. PSR is disabled via `amdgpu.dcdebugmask=0x10` to prevent post-resume DisplayPort flicker on external monitors. The BenQ monitor's Realtek `0bda:5420` hub gets `usbcore.quirks=...:k` (no-LPM) to stop a re-enumeration loop that swamped i2c-hid and froze the touchpad while docked. Boot output is silenced for a clean greetd login prompt.
 
 ## Desktop
 
@@ -52,6 +52,8 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 | Data | jq, gron, miller, csvlens |
 | Monitoring | btop, bottom, dust, tokei |
 | HTTP | httpie |
+| Secrets | sops (edit `secrets.yaml`), age (keygen/encryption) |
+| Payments | stripe-cli (`stripe`) |
 | Formatting | prettierd |
 
 ## Applications
@@ -60,7 +62,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 |----------|------|
 | Browsers | Google Chrome (Wayland + VA-API hardware video decode/encode), Firefox |
 | Email | Proton Mail (desktop), Superhuman (PWA) |
-| Chat | Slack, Teams, Zoom |
+| Chat | Slack, Teams (`teams-for-linux`; Chrome managed policy auto-launches `msteams:` meeting links into the app), Zoom |
 | AI | Claude (PWA) |
 | Notes | Obsidian |
 | Office | LibreOffice |

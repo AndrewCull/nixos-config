@@ -39,31 +39,35 @@ layout {
     struts {}
 }
 
-// Laptop panel — always to the right of any external display
+// Laptop panel — always to the right of any external display. Anchored at
+// x=3072 so both the work (logical 2560 wide) and home (logical 3072 wide)
+// monitors fit to its left with their right edge touching the laptop.
+// y=746 bottom-aligns it with the work monitor (1706 - 960 = 746).
 output "eDP-1" {
     mode "1920x1200@60.002"
     scale 1.25
-    position x=2560 y=0
+    position x=3072 y=746
 }
 
 // BenQ RD280UG (work) — matched by serial so it works on any DP port.
 // 120 Hz at 4K+ requires DP UHBR, which fails to retrain after s2idle
 // (amdgpu: "enabling link 3 failed: 15"), causing artifacts and blinking.
 // 60 Hz is stable across resume. VRR also disabled — it compounds the issue.
+// Sits to the left of the laptop panel. Logical width is 3840/1.5 = 2560, so
+// x = 3072 - 2560 = 512 puts its right edge against the laptop at x=3072.
 output "PNP(BNQ) BenQ RD280UG EMDBS00199087" {
     mode "3840x2560@59.984"
     scale 1.5
-    position x=0 y=0
+    position x=512 y=0
     focus-at-startup
 }
 
-// BenQ RD320U (home) — sits above the laptop panel, horizontally centered
-// over it. Laptop is at x=2560, logical width 1536; this monitor is logical
-// 3072 wide, so x = 2560 - (3072-1536)/2 = 1792. y = -1728 (its logical height).
+// BenQ RD320U (home) — sits to the left of the laptop panel. Logical width is
+// 3840/1.25 = 3072, so x=0 puts its right edge against the laptop at x=3072.
 output "PNP(BNQ) BenQ RD320U L8S0025307C" {
     mode "3840x2160@60.000"
     scale 1.25
-    position x=1792 y=-1728
+    position x=0 y=0
     focus-at-startup
 }
 

@@ -21,6 +21,12 @@
     "resume_offset=9897984"        # physical offset of /var/lib/swapfile for hibernate
     "amdgpu.gpu_recovery=1"        # enable GPU reset on hang instead of requiring hard reboot
     "amdgpu.dcdebugmask=0x10"      # DC_DISABLE_PSR — fixes DP flicker/artifacts on external monitor after resume
+    # BenQ monitor's Realtek 0bda:5420 hub enters a re-enumeration loop (~2s
+    # cycle, hundreds of reconnects) when plugged in via USB-C. The bus storm
+    # swamps i2c-hid input polling and the touchpad appears to freeze even
+    # though the ELAN device itself stays up. USB_QUIRK_NO_LPM (`k`) disables
+    # link power management on that VID/PID, which stops the loop.
+    "usbcore.quirks=0bda:5420:k"
   ];
 
   # Let video group control the mic-mute LED (avoids sudo in toggle script)

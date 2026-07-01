@@ -61,6 +61,7 @@
     clippy
     gnumake         # make for Makefiles
     uv              # python package/project manager (Astral)
+    stripe-cli      # stripe payments CLI (provides `stripe`)
 
     # yazi preview dependencies
     poppler-utils       # PDF thumbnails

@@ -12,6 +12,15 @@
       identityFile = "~/.ssh/render";
       identitiesOnly = true;
     };
+    matchBlocks."20.7.59.70" = {
+      user = "bradmin";
+      identityFile = "~/.ssh/p14s";
+      identitiesOnly = true;
+    };
+    matchBlocks."darkstar" = {
+      hostname = "darkstar";
+      user = "andrew";
+    };
   };
 
   services.ssh-agent.enable = true;

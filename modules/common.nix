@@ -22,6 +22,16 @@
   networking.firewall.enable = true;
   networking.firewall.allowedTCPPorts = [ 8081 ];
 
+  # ── SSH server ────────────────────────────────────────
+  services.openssh = {
+    enable = true;
+    settings = {
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+      PermitRootLogin = "no";
+    };
+  };
+
   # ── Tailscale ─────────────────────────────────────────
   # useRoutingFeatures = "client" enables proper exit-node usage
   # (Mullvad add-on or self-hosted exit nodes) — handles routing/MTU.
@@ -47,6 +57,9 @@
       "i2c"
     ];
     shell = pkgs.fish;
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM81zRUVsZt+sgW1FIb9EDJbgJeBRF31HBubhZsXuZ6g andrew@darkstar"
+    ];
   };
 
   # ── Nix settings ──────────────────────────────────────
@@ -72,7 +85,22 @@
     unzip
     busybox
     alsa-utils
+    sops # CLI for editing secrets/secrets.yaml (sops-nix only decrypts at build time)
+    age # age keygen/encryption backend for sops
   ];
+  # ── Chrome managed policy ─────────────────────────────
+  # Auto-launch the msteams: deep link (no "Open Microsoft Teams?" prompt) when
+  # a Teams meeting link from teams.microsoft.com fires it, so clicking a meeting
+  # link in webmail drops straight into teams-for-linux with the id + passcode.
+  environment.etc."opt/chrome/policies/managed/teams-autolaunch.json".text = builtins.toJSON {
+    AutoLaunchProtocolsFromOrigins = [
+      {
+        protocol = "msteams";
+        allowed_origins = [ "https://teams.microsoft.com" ];
+      }
+    ];
+  };
+
   # ── Shell ─────────────────────────────────────────────
   programs.fish.enable = true;
 
