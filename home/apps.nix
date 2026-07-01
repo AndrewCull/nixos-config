@@ -1,5 +1,13 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, osConfig, ... }:
 
+let
+  # darkstar's RD320U runs native 4K at niri scale 1.0. Chrome (ozone/wayland)
+  # follows the output scale, so at 1.0 its whole UI renders at native-pixel
+  # size — tiny on a 4K panel. Force a 1.25 device scale factor to restore the
+  # physical size it had at the old scale 1.25. Other hosts use real fractional
+  # scaling, so Chrome already gets the right scale from Wayland — don't force.
+  isDarkstar = osConfig.networking.hostName == "darkstar";
+in
 {
   # ── Browser ─────────────────────────────────────────
   programs.google-chrome = {
@@ -15,7 +23,7 @@
       "--enable-zero-copy"
       "--disable-background-networking"
       "--disable-backgrounding-occluded-windows"
-    ];
+    ] ++ lib.optional isDarkstar "--force-device-scale-factor=1.25";
   };
 
   programs.firefox = {
@@ -150,14 +158,34 @@
         cups dbus expat fontconfig freetype
         harfbuzz gdk-pixbuf
         libnotify libsecret libxslt sqlite icu
-        # X-Plane Identity Login uses WebKitGTK 4.1
-        webkitgtk_4_1
+        # X-Plane Identity Login uses WebKitGTK 4.1, which needs
+        # glib-networking to provide GIO's TLS backend — without it,
+        # the in-app browser logs "TLS support is not available" and
+        # license activation fails.
+        webkitgtk_4_1 glib-networking
+        # gamemode (libgamemodeauto.so + gamemoderun)
+        gamemode
         # misc
         udev libuuid libcap stdenv.cc.cc.lib
         curl openssl
       ];
       runScript = ''
-        bash -c 'cd "/home/andrew/Games/X-Plane 12" && exec ./X-Plane-x86_64 "$@"'
+        bash -c '
+          cd "/home/andrew/Games/X-Plane 12"
+          # GLib was built with its GIO module dir pinned into the Nix store,
+          # so glib-networking (installed inside the FHS at /usr/lib64/gio/modules)
+          # is invisible without an explicit hint. Without it WebKitGTK has no
+          # TLS backend and the login flow reports "TLS support is not available".
+          export GIO_EXTRA_MODULES=/usr/lib64/gio/modules
+          # Force RADV (open-source Mesa Vulkan driver) on AMD
+          export AMD_VULKAN_ICD=RADV
+          # gpl = Graphics Pipeline Library, reduces shader compile stutter
+          export RADV_PERFTEST=gpl
+          # Mesa: cache shaders so cold-start stutter only happens once
+          export MESA_SHADER_CACHE_DIR="$HOME/.cache/mesa_shader_cache"
+          mkdir -p "$MESA_SHADER_CACHE_DIR"
+          exec gamemoderun ./X-Plane-x86_64 "$@"
+        '
       '';
     };
   in [

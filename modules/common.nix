@@ -35,9 +35,13 @@
   # ── Tailscale ─────────────────────────────────────────
   # useRoutingFeatures = "client" enables proper exit-node usage
   # (Mullvad add-on or self-hosted exit nodes) — handles routing/MTU.
+  # --ssh: Tailscale serves SSH on the tailnet interface, ACL-authed,
+  #        no key management. --operator: lets `andrew` run `tailscale`
+  #        CLI without sudo.
   services.tailscale = {
     enable = true;
     useRoutingFeatures = "client";
+    extraUpFlags = [ "--ssh" "--operator=andrew" ];
   };
   networking.firewall.trustedInterfaces = [ "tailscale0" ];
 
@@ -105,6 +109,9 @@
   programs.fish.enable = true;
 
   nixpkgs.config.allowUnfree = true;
+  # Obsidian/Proton Mail track Electron slowly; 39.8.10 went EOL upstream but
+  # the apps still work. Revisit when they bump to a supported Electron.
+  nixpkgs.config.permittedInsecurePackages = [ "electron-39.8.10" ];
 
   # ── Security ──────────────────────────────────────────
   security.polkit.enable = true;

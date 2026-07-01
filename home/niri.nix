@@ -1,6 +1,18 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, osConfig, ... }:
 
 let
+  # darkstar's RD320U runs native 4K at niri scale 1.0 (pixel-perfect). These
+  # bars/launchers carry hand-set px/pt sizes that stylix doesn't manage, so
+  # bump them ~25% on darkstar to match the old scale-1.25 physical size.
+  # Other hosts (fractionally-scaled displays) keep the original sizes.
+  isDarkstar = osConfig.networking.hostName == "darkstar";
+  wbBase     = if isDarkstar then "16" else "13";  # waybar base font
+  wbLauncher = if isDarkstar then "23" else "18";  # waybar launcher glyph
+  wbHeight   = if isDarkstar then 28 else 22;       # waybar bar height
+  rofiFont   = if isDarkstar then "15" else "12";  # rofi font pt
+  rofiIcon   = if isDarkstar then "28" else "22";  # rofi element-icon px
+  makoFont   = if isDarkstar then "Inter 13" else "Inter 10";
+
   power-menu = pkgs.writeShellScriptBin "power-menu" ''
     choice=$(printf " Lock\n󰤄 Suspend\n󰜉 Reboot\n󰐥 Shutdown\n󰗽 Logout" | rofi -dmenu -p "Power")
 
@@ -217,7 +229,7 @@ in
     enable = true;
     style = with config.lib.stylix.colors; ''
       * {
-        font-size: 13px;
+        font-size: ${wbBase}px;
       }
       #workspaces button.active {
         border-radius: 0;
@@ -231,7 +243,7 @@ in
         margin: 0 4px;
       }
       #custom-launcher {
-        font-size: 18px;
+        font-size: ${wbLauncher}px;
         margin: 2px 10px 2px 6px;
         padding: 0 8px;
         border: 1px solid #${base03};
@@ -242,17 +254,18 @@ in
       mainBar = {
         layer = "top";
         position = "top";
-        height = 22;
+        height = wbHeight;
         modules-left = [ "custom/launcher" "niri/workspaces" ];
         modules-center = [ "clock" ];
+        # darkstar is a desktop with no battery; waybar's battery module
+        # segfaults in its refresh worker on a battery-less machine, so omit it.
         modules-right = [
           "custom/tailscale"
           "memory"
           "network"
           "bluetooth"
           "pulseaudio"
-          "battery"
-        ];
+        ] ++ lib.optional (!isDarkstar) "battery";
 
         "custom/launcher" = {
           format = "󱄅";
@@ -382,7 +395,7 @@ in
 
         background-color: transparent;
         text-color:       @fg;
-        font:             "JetBrainsMono Nerd Font 12";
+        font:             "JetBrainsMono Nerd Font ${rofiFont}";
       }
 
       window {
@@ -444,7 +457,7 @@ in
       }
 
       element-icon {
-        size:             22px;
+        size:             ${rofiIcon}px;
         background-color: transparent;
       }
 
@@ -464,7 +477,7 @@ in
       location = 1;   # north-west
       anchor = 1;     # north-west
       x-offset = 0;
-      y-offset = 22;  # matches waybar height
+      y-offset = wbHeight;  # matches waybar height
     };
   };
 
@@ -475,7 +488,7 @@ in
       default-timeout = 5000;
       border-size = 1;
       border-radius = 0;
-      font = lib.mkForce "Inter 10";
+      font = lib.mkForce makoFont;
     };
   };
 

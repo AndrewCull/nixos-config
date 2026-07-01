@@ -60,7 +60,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 
 | Category | Apps |
 |----------|------|
-| Browsers | Google Chrome (Wayland + VA-API hardware video decode/encode), Firefox |
+| Browsers | Google Chrome (Wayland + VA-API hardware video decode/encode; on darkstar forced to `--force-device-scale-factor=1.25` so its UI keeps physical size at the RD320U's native-4K niri scale 1.0), Firefox |
 | Email | Proton Mail (desktop), Superhuman (PWA) |
 | Chat | Slack, Teams (`teams-for-linux`; Chrome managed policy auto-launches `msteams:` meeting links into the app), Zoom |
 | AI | Claude (PWA) |
@@ -79,7 +79,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 
 | Service | Purpose |
 |---------|---------|
-| Tailscale + Trayscale | Mesh networking (work tailnet incl. Render) + GUI control. Configured as exit-node client (`useRoutingFeatures = "client"`) so Mullvad add-on or self-hosted exit nodes route general internet traffic while tailnet peers stay reachable. |
+| Tailscale + Trayscale | Mesh networking (work tailnet incl. Render) + GUI control. Configured as exit-node client (`useRoutingFeatures = "client"`) so Mullvad add-on or self-hosted exit nodes route general internet traffic while tailnet peers stay reachable. Tailscale SSH enabled (`--ssh --operator=andrew`): SSH between tailnet peers is ACL-authed, no key management. |
 | ngrok | Tunnel local servers for demos |
 | PipeWire | Audio (with PulseAudio compat) |
 | TLP | Laptop power management (`amd-pstate-epp` driver: `powersave` governor on AC + BAT — the *dynamic* governor in active mode; AC uses `balance_performance` EPP, BAT uses `power`. USB autosuspend disabled — kills xHCI on resume) |
@@ -91,6 +91,8 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 | fwupd | Firmware updates |
 | AppImage | `programs.appimage` with binfmt — run `.AppImage` files directly |
 | i2c | `hardware.i2c.enable` + user in `i2c` group — DDC/CI access for external monitor tools (e.g. BenQ Display Pilot 2) |
+| OpenRGB | RGB lighting control for the Sapphire RX 9070 (darkstar only) — `motherboard = "amd"` loads the I2C modules needed to reach the GPU's controller. Set a profile in the GUI, then point `startupProfile` at it to auto-apply on boot. |
+| GPU diagnostics | `glxinfo` (mesa-demos) and `vulkaninfo` (vulkan-tools) for OpenGL/Vulkan renderer sanity checks (darkstar only) |
 | Blueman | Bluetooth management |
 | GNOME Keyring | Secret storage (auto-unlocks on password login) |
 
@@ -102,12 +104,13 @@ modules/
   common.nix                    # Boot, networking, users, nix settings, pipewire, stylix
   niri.nix                      # Niri compositor, greetd, portals, bluetooth
   hhkb.nix                      # HHKB keyboard layer (media/nav keys via keyd)
+  mxkeys.nix                    # Logitech MX Keys: Cmd → Super remap (via keyd)
   docker.nix                    # Docker daemon (opt-in per host)
 home/
   default.nix                   # Auto-imports all .nix files in this directory
   fish.nix                      # Shell config and aliases
   helix.nix                     # Editor + LSP setup
-  niri.nix                      # Waybar (tailscale, memory, network, bt, audio, battery), rofi, mako, swayidle, hyprlock, wallpaper
+  niri.nix                      # Waybar (tailscale, memory, network, bt, audio, battery — battery omitted on darkstar, a desktop with none), rofi, mako, swayidle, hyprlock, wallpaper
   apps.nix                      # Browsers, GUI apps, PWA shortcuts
   cava.nix                      # Terminal audio visualizer (pipewire input)
   dev.nix                       # CLI dev tools
@@ -124,7 +127,7 @@ hosts/
 secrets/
   secrets.yaml                  # Encrypted secrets (sops-nix + age)
 confs/
-  niri/config.kdl               # Niri keybindings and layout
+  niri/config.kdl               # Niri keybindings and layout (numlock enabled at startup)
   hyprlock.conf                 # Lock screen appearance
 templates/
   rust-nextjs-flake.nix         # Dev shell template: Rust + Next.js + Docker
@@ -269,6 +272,7 @@ All keybindings use `Mod` (Super/Windows key). Press `Mod+Shift+/` to open the k
 | `lt` | `eza -la --icons --tree --level=2` |
 | `cat` | `bat` |
 | `cd` | `z` (zoxide) |
+| `netcheck [host]` | Split WiFi-link vs upstream-internet health check (signal, latency, packet loss) — tells at a glance whether a video stutter is local WiFi or the Starlink uplink |
 
 ## License
 

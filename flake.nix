@@ -44,6 +44,7 @@
       ./modules/common.nix
       ./modules/niri.nix
       ./modules/hhkb.nix
+      ./modules/mxkeys.nix
 
       niri.nixosModules.niri
       sops-nix.nixosModules.sops
