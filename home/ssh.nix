@@ -21,6 +21,12 @@
       hostname = "darkstar";
       user = "andrew";
     };
+    matchBlocks."calegalmags" = {
+      hostname = "209.38.135.14";
+      user = "andrew";
+      identityFile = "~/.ssh/id_ed25519";
+      identitiesOnly = true;
+    };
   };
 
   services.ssh-agent.enable = true;
