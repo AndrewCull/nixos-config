@@ -145,6 +145,90 @@ let
     [ -w "$LED" ] && echo "$muted" > "$LED"
   '';
 
+  # ── Audio mode toggle ──────────────────────────────────
+  # Two explicit modes, bound to Mod+P / Mod+Shift+P:
+  #   audio-mode speaker    → EasyEffects speaker DSP on; default sink = the
+  #                           built-in speaker.
+  #   audio-mode headphones → EasyEffects off; default sink = the connected
+  #                           Bluetooth device.
+  #
+  # EasyEffects' own output is a normal stream that FOLLOWS the default sink, and
+  # apps get DSP by being routed to the "easyeffects_sink" virtual sink (WirePlumber
+  # remembers this per-app). So the default sink must always be a *real* device —
+  # pointing it at easyeffects_sink would make EE follow default into its own sink
+  # (a feedback loop). In speaker mode the default is the built-in speaker; EE
+  # follows it there and pinned apps flow app → easyeffects_sink → EE → speaker.
+  #
+  # EasyEffects' convolver is a *speaker* impulse response (see home/easyeffects.nix),
+  # wrong for headphones — so headphone mode STOPS the service: its sink vanishes,
+  # pinned streams like Chrome fall back to the default (the Bluetooth device), and
+  # nothing speaker-tuned reaches the headphones.
+  audio-mode = pkgs.writeShellScriptBin "audio-mode" ''
+    wpctl=${pkgs.wireplumber}/bin/wpctl
+    jq=${pkgs.jq}/bin/jq
+    pwdump=${pkgs.pipewire}/bin/pw-dump
+    notify=${pkgs.libnotify}/bin/notify-send
+
+    # Numeric node id of a sink by its node.name (empty if absent).
+    sink_id() {
+      $pwdump | $jq -r --arg n "$1" \
+        '.[] | select(.info.props["node.name"]==$n) | .id' | head -n1
+    }
+
+    case "$1" in
+      headphones)
+        # First connected Bluetooth output sink: "<id>|<description>".
+        bt=$($pwdump | $jq -r \
+          '.[] | select(.info.props["media.class"]=="Audio/Sink")
+               | select(.info.props["node.name"] | startswith("bluez_output."))
+               | "\(.id)|\(.info.props["node.description"])"' | head -n1)
+        if [ -z "$bt" ]; then
+          $notify -u critical "🎧 Headphones" "No Bluetooth device connected"
+          exit 1
+        fi
+        id=''${bt%%|*}
+        name=''${bt#*|}
+        systemctl --user stop easyeffects
+        $wpctl set-default "$id"
+        $notify "🎧 Headphones" "$name"
+        ;;
+      speaker)
+        # Built-in analog speaker: prefer a "Speaker"-named alsa sink, else the
+        # first non-HDMI alsa sink.
+        spk=$($pwdump | $jq -r \
+          '.[] | select(.info.props["media.class"]=="Audio/Sink")
+               | select(.info.props["node.name"] | startswith("alsa_output."))
+               | select((.info.props["node.name"] | ascii_downcase | contains("speaker"))
+                        or (.info.props["node.description"] | ascii_downcase | contains("speaker")))
+               | .id' | head -n1)
+        if [ -z "$spk" ]; then
+          spk=$($pwdump | $jq -r \
+            '.[] | select(.info.props["media.class"]=="Audio/Sink")
+                 | select(.info.props["node.name"] | startswith("alsa_output."))
+                 | select(.info.props["node.name"] | ascii_downcase | contains("hdmi") | not)
+                 | .id' | head -n1)
+        fi
+        if [ -z "$spk" ]; then
+          $notify -u critical "🔊 Speakers" "No built-in speaker sink found"
+          exit 1
+        fi
+        # Point default at the speaker first (EE's output follows it there), then
+        # start EE so pinned apps re-attach through it.
+        $wpctl set-default "$spk"
+        systemctl --user start easyeffects
+        tries=0
+        while [ -z "$(sink_id easyeffects_sink)" ] && [ "$tries" -lt 30 ]; do
+          sleep 0.1; tries=$((tries + 1))
+        done
+        $notify "🔊 Speakers" "EasyEffects on"
+        ;;
+      *)
+        echo "usage: audio-mode <speaker|headphones>" >&2
+        exit 2
+        ;;
+    esac
+  '';
+
   wallpaper-next = pkgs.writeShellScriptBin "wallpaper-next" ''
     dir="$HOME/wallpapers"
     state="$HOME/.config/current-wallpaper"
@@ -222,11 +306,34 @@ in
     wallpaper-colorize
     waybar-launcher
     mic-mute-toggle
+    audio-mode
   ];
 
   # ── Waybar ──────────────────────────────────────────
+  # Run waybar as a systemd user service instead of niri's one-shot
+  # spawn-at-startup, so a crash auto-restarts (spawn-at-startup never respawns).
+  # Uses the waybar-launcher wrapper (not plain waybar) to keep the runtime
+  # wallpaper-tinted style (-s ~/.cache/waybar/style.css). We manage the unit
+  # ourselves rather than programs.waybar.systemd because that runs bare waybar.
+  systemd.user.services.waybar = {
+    Unit = {
+      Description = "Waybar (wallpaper-tinted, auto-restarting)";
+      PartOf = [ "graphical-session.target" ];
+      After = [ "graphical-session.target" ];
+      Requisite = [ "graphical-session.target" ];
+    };
+    Service = {
+      ExecStart = "${waybar-launcher}/bin/waybar-launcher";
+      ExecReload = "${pkgs.procps}/bin/pkill -SIGUSR2 waybar";
+      Restart = "on-failure";
+      RestartSec = 2;
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
+  };
+
   programs.waybar = {
     enable = true;
+    systemd.enable = false; # started via our own unit above, not the module's
     style = with config.lib.stylix.colors; ''
       * {
         font-size: ${wbBase}px;

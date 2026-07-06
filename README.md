@@ -82,6 +82,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 | Tailscale + Trayscale | Mesh networking (work tailnet incl. Render) + GUI control. Configured as exit-node client (`useRoutingFeatures = "client"`) so Mullvad add-on or self-hosted exit nodes route general internet traffic while tailnet peers stay reachable. Tailscale SSH enabled (`--ssh --operator=andrew`): SSH between tailnet peers is ACL-authed, no key management. |
 | ngrok | Tunnel local servers for demos |
 | PipeWire | Audio (with PulseAudio compat) |
+| EasyEffects | Speaker DSP — background service that restores the loudness/body the P14s G6 speakers get from their Windows Dolby tuning; without it the ALC257 output is audible but quiet/thin even at 100%. Chain (tuned in the GUI, persisted by EasyEffects): autogain → convolver → stereo_tools, using the community P14s **G5** impulse response (`confs/easyeffects/`). No preset is force-loaded, so GUI tweaks survive restarts. Because its convolver is a *speaker* impulse response (wrong for headphones), the `audio-mode` helper (`Mod+P` / `Mod+Shift+P`) stops the service when switching to Bluetooth and restarts it for speakers. |
 | TLP | Laptop power management (`amd-pstate-epp` driver: `powersave` governor on AC + BAT — the *dynamic* governor in active mode; AC uses `balance_performance` EPP, BAT uses `power`. USB autosuspend disabled — kills xHCI on resume) |
 | thermald | Thermal management |
 | fprintd | Fingerprint authentication (disabled for greetd and hyprlock — fprintd timeouts blocked password entry) |
@@ -255,6 +256,8 @@ All keybindings use `Mod` (Super/Windows key). Press `Mod+Shift+/` to open the k
 | `Mod+V` | Toggle floating |
 | `Mod+Tab` | Overview |
 | `Mod+Shift+W` | Wallpaper picker |
+| `Mod+P` | 🎧 Headphone audio mode — stops EasyEffects and routes everything to the connected Bluetooth device |
+| `Mod+Shift+P` | 🔊 Speaker audio mode — default sink → built-in speaker, starts EasyEffects (DSP restored) |
 | `Print` | Screenshot |
 | `Mod+Shift+E` | Quit niri |
 

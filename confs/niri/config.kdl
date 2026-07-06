@@ -78,7 +78,7 @@ output "PNP(BNQ) BenQ RD320U L8S0025307C" {
 }
 
 spawn-at-startup "xwayland-satellite"
-spawn-at-startup "waybar-launcher"
+// waybar is a systemd user service now (auto-restarts on crash) — see home/niri.nix
 spawn-at-startup "mako"
 spawn-at-startup "wallpaper-launch"
 
@@ -143,6 +143,10 @@ binds {
     XF86AudioMicMute     allow-when-locked=true { spawn "mic-mute-toggle"; }
     XF86MonBrightnessUp   { spawn "brightnessctl" "set" "+5%"; }
     XF86MonBrightnessDown { spawn "brightnessctl" "set" "5%-"; }
+
+    // ── Audio output ─────────────────────────────────
+    Mod+P       { spawn "audio-mode" "headphones"; }
+    Mod+Shift+P { spawn "audio-mode" "speaker"; }
 
     // ── Focus (vim) ─────────────────────────────────
     Mod+H     { focus-column-left; }
