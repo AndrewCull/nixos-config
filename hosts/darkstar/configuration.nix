@@ -63,15 +63,12 @@
   sops.defaultSopsFile = ../../secrets/secrets.yaml;
   sops.age.keyFile = "/var/lib/sops-nix/key.txt";
 
-  # After re-encrypting secrets.yaml on p14s with `sops updatekeys`,
-  # pull and uncomment these two lines + remove `initialPassword` below.
-#  sops.secrets.andrew-password.neededForUsers = true;
+  sops.secrets.andrew-password.neededForUsers = true;
 
   # -- User --
   users.users.andrew = {
     isNormalUser = true;
     extraGroups = [ "wheel" "video" "audio" "networkmanager" ];
-    initialPassword = "changeme";
-#   hashedPasswordFile = config.sops.secrets.andrew-password.path;
+    hashedPasswordFile = config.sops.secrets.andrew-password.path;
   };
 }
