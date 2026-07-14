@@ -59,6 +59,8 @@
       "video"
       "audio"
       "i2c"
+      "scanner"   # SANE scanner access
+      "lp"        # printer/scanner device nodes
     ];
     shell = pkgs.fish;
     openssh.authorizedKeys.keys = [
@@ -91,6 +93,7 @@
     alsa-utils
     sops # CLI for editing secrets/secrets.yaml (sops-nix only decrypts at build time)
     age # age keygen/encryption backend for sops
+    simple-scan   # GUI front-end for SANE scanners
   ];
   # ── Chrome managed policy ─────────────────────────────
   # Auto-launch the msteams: deep link (no "Open Microsoft Teams?" prompt) when
@@ -162,6 +165,15 @@
   services.printing = {
     enable = true;
     browsed.enable = true;
+  };
+
+  # ── Scanning ─────────────────────────────────────
+  # Xerox ships no Linux SANE backend; modern Xerox MFPs do driverless
+  # eSCL/AirScan (WSD as fallback), which sane-airscan speaks. Network
+  # scanners are auto-discovered over the mDNS/Avahi already enabled above.
+  hardware.sane = {
+    enable = true;
+    extraBackends = [ pkgs.sane-airscan ];
   };
 
   # ── Firmware ──────────────────────────────────────────

@@ -90,6 +90,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 | Docker | Container runtime (auto-prune) |
 | Samba + Avahi | Network file sharing / discovery |
 | CUPS | Printing |
+| SANE | Scanning — `sane-airscan` backend for driverless eSCL/AirScan (network Xerox & other MFPs auto-discovered via Avahi); `simple-scan` GUI; user in `scanner`/`lp` groups |
 | fwupd | Firmware updates |
 | AppImage | `programs.appimage` with binfmt — run `.AppImage` files directly |
 | i2c | `hardware.i2c.enable` + user in `i2c` group — DDC/CI access for external monitor tools (e.g. BenQ Display Pilot 2) |
