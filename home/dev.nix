@@ -21,6 +21,21 @@
     enableFishIntegration = true;
   };
 
+  # btop built with ROCm so it can read AMD GPU stats (util, VRAM, temp, power)
+  programs.btop = {
+    enable = true;
+    package = pkgs.btop-rocm;
+    settings = {
+      shown_boxes = "cpu mem net proc gpu0";
+      show_gpu_info = "On";   # GPU summary in the CPU box too
+      gpu_mirror_graph = false;
+      show_swap = true;
+      show_disks = true;
+      show_io_stat = true;    # disk IO in the mem/disks box
+      proc_tree = false;
+    };
+  };
+
   programs.zoxide = {
     enable = true;
     enableFishIntegration = true;
@@ -59,7 +74,7 @@
     dust            # disk usage
     arp-scan
     dig
-    btop
+    amdgpu_top      # detailed AMD GPU monitor (per-process VRAM, clocks, power)
     tmux
     cargo
     rustc

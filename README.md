@@ -50,7 +50,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 | Search | ripgrep, fd, fzf |
 | Databases | PostgreSQL (psql), TablePlus |
 | Data | jq, gron, miller, csvlens |
-| Monitoring | btop, bottom, dust, tokei |
+| Monitoring | btop (ROCm build — AMD GPU box shown by default: util, VRAM, temp, power; plus swap/disks/IO), amdgpu_top (per-process VRAM, clocks, power), bottom, dust, tokei |
 | HTTP | httpie |
 | Secrets | sops (edit `secrets.yaml`), age (keygen/encryption) |
 | Payments | stripe-cli (`stripe`) |
