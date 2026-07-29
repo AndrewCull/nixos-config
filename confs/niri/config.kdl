@@ -246,5 +246,5 @@ binds {
 
     // ── Session ─────────────────────────────────────
     Mod+Shift+E { quit; }
-    Mod+Shift+P { power-off-monitors; }
+    Mod+Shift+O { power-off-monitors; }
 }
