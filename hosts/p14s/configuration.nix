@@ -101,6 +101,21 @@
     HibernateDelaySec = 120;
   };
 
+  # Unload the MT7925 WiFi driver before any sleep. Letting it hibernate with
+  # a live association leaves stale entries on the mt76 wcid poll list; the
+  # next AP roam then re-adds a freed wcid and panics the kernel
+  # (list_add corruption in mt76_wcid_add_poll, seen 2026-03-11 → 2026-07-20).
+  # Unloading pre-sleep means the post-resume load starts from clean state.
+  systemd.services."wifi-pre-sleep" = {
+    description = "Unload MT7925 WiFi driver before sleep";
+    before = [ "sleep.target" ];
+    wantedBy = [ "sleep.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.kmod}/bin/modprobe -r mt7925e";
+    };
+  };
+
   # Reload MT7925 WiFi driver and rebind xHCI USB controllers on resume.
   # After s2idle the xHCI controllers that host the webcam and USB-C dock
   # (and with it the external DisplayPort monitor) come back in a broken
@@ -133,9 +148,10 @@
           [ -e "$s" ] && echo detect > "$s" 2>/dev/null || true
         done
 
-        # Reload WiFi driver
-        ${pkgs.kmod}/bin/modprobe -r mt7925e
-        sleep 2
+        # WiFi driver was unloaded pre-sleep (wifi-pre-sleep service); the -r
+        # is only a fallback in case that unload didn't run.
+        ${pkgs.kmod}/bin/modprobe -r mt7925e 2>/dev/null || true
+        sleep 1
         ${pkgs.kmod}/bin/modprobe mt7925e
       '';
     };
