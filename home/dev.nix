@@ -37,6 +37,12 @@
     shellWrapperName = "";
   };
 
+  home.sessionVariables = {
+    # Claude Code's mouse tracking fights zellij's mouse_mode — clicks paste
+    # the clipboard. Disable it; keyboard input is unaffected.
+    CLAUDE_CODE_DISABLE_MOUSE = "1";
+  };
+
   # ── Packages ────────────────────────────────────────
   home.packages = with pkgs; [
     fd              # faster find

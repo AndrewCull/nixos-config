@@ -115,7 +115,7 @@ home/
   niri.nix                      # Waybar (tailscale, memory, network, bt, audio, battery — battery omitted on darkstar, a desktop with none), rofi, mako, swayidle, hyprlock, wallpaper
   apps.nix                      # Browsers, GUI apps, PWA shortcuts
   cava.nix                      # Terminal audio visualizer (pipewire input)
-  dev.nix                       # CLI dev tools
+  dev.nix                       # CLI dev tools (sets CLAUDE_CODE_DISABLE_MOUSE=1 — Claude Code's mouse tracking conflicts with zellij, causing click-to-paste)
   git.nix                       # Git config
   ghostty.nix                   # Terminal emulator
   ssh.nix                       # SSH client config
