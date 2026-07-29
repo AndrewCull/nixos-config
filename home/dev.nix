@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, inputs, ... }:
 
 {
   # ── CLI tools with home-manager integration ─────────
@@ -62,6 +62,7 @@
     gnumake         # make for Makefiles
     uv              # python package/project manager (Astral)
     stripe-cli      # stripe payments CLI (provides `stripe`)
+    inputs.herdr.packages.${pkgs.system}.default  # agent multiplexer TUI
 
     # yazi preview dependencies
     poppler-utils       # PDF thumbnails

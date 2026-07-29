@@ -27,6 +27,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # herdr — terminal workspace manager / agent multiplexer (not in nixpkgs).
+    # Pinned to a release tag; bump the tag to upgrade.
+    herdr = {
+      url = "github:ogulcancelik/herdr/v0.7.2";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Pinned old nixpkgs solely to source libinput 1.29.2. libinput 1.31 (in
     # current nixpkgs unstable) stops enumerating keyboard + touchpad on this
     # ThinkPad P14s Gen 6 AMD. Overlay below pulls just libinput from here.

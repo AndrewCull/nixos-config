@@ -54,6 +54,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 | HTTP | httpie |
 | Secrets | sops (edit `secrets.yaml`), age (keygen/encryption) |
 | Payments | stripe-cli (`stripe`) |
+| AI agents | herdr (agent multiplexer TUI, via flake input pinned to a release tag) |
 | Formatting | prettierd |
 
 ## Applications
