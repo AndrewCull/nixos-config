@@ -73,13 +73,6 @@
 
   environment.systemPackages = with pkgs; [ powertop lm_sensors libva-utils ];
 
-  # ── Steam ────────────────────────────────────────
-  programs.steam = {
-    enable = true;
-    gamescopeSession.enable = true;
-  };
-  programs.gamemode.enable = true;
-
   # ── Fingerprint reader ────────────────────────────────
   services.fprintd.enable = true;
 

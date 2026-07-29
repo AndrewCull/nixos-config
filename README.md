@@ -74,7 +74,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 | Passwords | Bitwarden |
 | Graphics | Graphite (vector editor), Inkscape (vector editor), GIMP (raster editor) |
 | Code | Zed, Warp Terminal |
-| Gaming | Steam + Gamescope + GameMode, X-Plane 12 (via custom `xplane-run` FHS env) |
+| Gaming | darkstar only: Steam + Gamescope + GameMode, X-Plane 12 (via custom `xplane-run` FHS env), `steam-run`. Removed from p14s to reclaim disk space. |
 
 ## System Services
 

@@ -95,14 +95,6 @@ in
       categories = [ "Settings" "HardwareSettings" ];
     };
 
-    x-plane-12 = {
-      name = "X-Plane 12";
-      exec = "xplane-run";
-      icon = "applications-games";
-      type = "Application";
-      categories = [ "Game" "Simulation" ];
-    };
-
     # Override the package's entry — on niri/Wayland the app only renders
     # with --ozone-platform=x11 (via XWayland).
     proton-mail = {
@@ -114,6 +106,14 @@ in
       startupNotify = true;
       categories = [ "Network" "Email" ];
       mimeType = [ "x-scheme-handler/mailto" ];
+    };
+  } // lib.optionalAttrs isDarkstar {
+    x-plane-12 = {
+      name = "X-Plane 12";
+      exec = "xplane-run";
+      icon = "applications-games";
+      type = "Application";
+      categories = [ "Game" "Simulation" ];
     };
   };
 
@@ -253,10 +253,6 @@ in
     # terminal launcher for Nautilus "Open With"
     xdg-terminal-exec
 
-    # FHS env for running non-Nix binaries (X-Plane installer, etc.)
-    steam-run
-    xplane-run
-
     # recording
     obs-studio
 
@@ -275,5 +271,10 @@ in
     fastfetch       # system info with ASCII art
     nms             # Sneakers movie decryption effect
     cool-retro-term # CRT terminal emulator
+  ]
+  # gaming — darkstar only; p14s stays lean
+  ++ lib.optionals isDarkstar [
+    steam-run   # FHS env for running non-Nix binaries (X-Plane installer, etc.)
+    xplane-run
   ];
 }
