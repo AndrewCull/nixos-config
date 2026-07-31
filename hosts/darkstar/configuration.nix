@@ -41,8 +41,10 @@
   };
   programs.gamemode.enable = true;
 
-  # mesa-demos → glxinfo (OpenGL renderer/version), vulkan-tools → vulkaninfo.
-  environment.systemPackages = with pkgs; [ openrgb mesa-demos vulkan-tools ];
+  # mesa-demos → glxinfo (OpenGL renderer/version), vulkan-tools → vulkaninfo,
+  # libva-utils → vainfo (confirm VA-API decode is live on the dGPU, not a
+  # silent software-decode fallback).
+  environment.systemPackages = with pkgs; [ openrgb mesa-demos vulkan-tools libva-utils ];
 
   # ── GPU RGB control ───────────────────────────────────
   # Profiles edited in the openrgb GUI land in ~/.config/OpenRGB; sync them
