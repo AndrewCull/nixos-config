@@ -50,6 +50,12 @@
   i18n.defaultLocale = "en_US.UTF-8";
 
   # ── Users ─────────────────────────────────────────────
+  # Config is the source of truth for passwords: the sops-managed hash
+  # (hashedPasswordFile, per host) is applied on every rebuild, and manual
+  # `passwd` changes are reverted. Root has no declared password → locked;
+  # use sudo from wheel.
+  users.mutableUsers = false;
+
   users.users.andrew = {
     isNormalUser = true;
     extraGroups = [

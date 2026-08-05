@@ -169,6 +169,9 @@ sudo age-keygen -o /var/lib/sops-nix/key.txt
 # Add the public key to .sops.yaml, then:
 mkpasswd -m sha-512    # generate your password hash
 sops secrets/secrets.yaml   # add: andrew-password: "$6$..."
+# Note: users.mutableUsers = false — the sops hash is the login password on
+# every rebuild; manual `passwd` changes are reverted. Existing hosts need a
+# key that can decrypt secrets.yaml (add new recipients + `sops updatekeys`).
 
 # Review and adjust:
 #   - Hostname in hosts/p14s/configuration.nix
