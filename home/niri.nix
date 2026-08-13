@@ -622,7 +622,7 @@ in
         timeout = 900;
         command = toString (pkgs.writeShellScript "lock-then-sleep-screen" ''
           ${pkgs.procps}/bin/pgrep -x hyprlock || ${pkgs.hyprlock}/bin/hyprlock &
-          sleep 300
+          ${pkgs.coreutils}/bin/sleep 300
           if ${pkgs.procps}/bin/pgrep -x hyprlock > /dev/null; then
             ${pkgs.niri}/bin/niri msg action power-off-monitors
           fi
