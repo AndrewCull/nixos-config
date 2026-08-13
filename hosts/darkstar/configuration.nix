@@ -24,6 +24,43 @@
   hardware.cpu.amd.updateMicrocode = true;
   boot.kernelParams = [ "amd_pstate=active" ];
 
+  # ── Hang forensics ────────────────────────────────────
+  # 2026-08-11: silent hard lockup at 07:11:56 after 6 days uptime. The journal
+  # cut off mid-line, /sys/fs/pstore was empty, and there was no OOM, MCE, GPU
+  # reset or thermal event — the CPU simply stopped without reaching the panic
+  # handler. The box then sat dead for ~8h because nothing was configured to
+  # notice. Leading suspect is the memory OC (2×48 GiB dual-rank at 5600 MT/s,
+  # above AMD's qualified ceiling for 2R UDIMMs on AM5), which is a BIOS-side
+  # fix. Everything below is so the *next* one leaves evidence and recovers.
+
+  # Pet the SP5100 TCO watchdog that this board has always had and never used.
+  # If userspace stops scheduling for 30s the hardware resets the machine,
+  # instead of it sitting frozen until someone walks over to it.
+  systemd.settings.Manager.RuntimeWatchdogSec = "30s";
+
+  # Default is panic=0 — halt forever. Reboot 10s after a panic instead, and
+  # treat an oops or a hard lockup as panic-worthy so they trigger the reboot
+  # and the pstore dump rather than being logged to a journal that is, by
+  # definition, no longer being written to disk.
+  boot.kernel.sysctl = {
+    "kernel.panic" = 10;
+    "kernel.panic_on_oops" = 1;
+    "kernel.hardlockup_panic" = 1;
+  };
+
+  # kexec crash kernel → a real /proc/vmcore. efi_pstore already captures the
+  # ring buffer summary on its own; this is for when that isn't enough.
+  # NOTE: this module also forces softlockup_panic=1 kernel-wide, so a CPU
+  # stalled >20s (heavy NVMe/docker IO can do it) will panic and reboot too.
+  # If that turns into spurious reboots, drop this option — the sysctls and
+  # the watchdog above stand on their own.
+  boot.crashDump.enable = true;
+  boot.crashDump.reservedMemory = "512M";
+
+  # One-keystroke memtest from the boot menu. Worth having, but note it will
+  # NOT reproduce an idle-hours AM5 lockup — only uptime tests that.
+  boot.loader.systemd-boot.memtest86.enable = true;
+
   # ── GPU (RX 9070 discrete + Granite Ridge iGPU) ───────
   hardware.graphics = {
     enable = true;
