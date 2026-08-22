@@ -19,6 +19,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 | Night Mode | wlsunset (eDP-1 only, 4000K night / 6500K day, 20:00–07:00) |
 | Screenshots | grim + slurp |
 | Clipboard | wl-clipboard + cliphist |
+| AI tooling | `sys-doctor` (`Mod+Shift+D`): gathers an evidence bundle (journal errors/warnings, kernel log, failed units, coredumps, thermal, memory/PSI, disk, battery, network + tailscale, `wpctl status`, niri outputs, top processes; `--last-boot` adds the previous boot, pstore and /var/crash) into `~/.cache/sys-doctor/<ts>/` and opens Claude Code in it with the `nixos-doctor` skill. `--quick` runs `claude -p` with read-only tools and posts the `VERDICT:` line as a notification ("Open report" → glow). `sys-doctor-boot-check` (user service) offers "Diagnose with AI" on the first login after a boot that did not end cleanly. Agent skills live in `agents/skills/` (`nixos-doctor`, `nixos-config`) and are symlinked into `~/.claude/skills/` by `home/ai.nix` (out-of-store, so edits are live). |
 | Theme | Gruvbox Dark Medium (via Stylix) |
 | Icons | Papirus-Dark |
 | Cursor | phinger-cursors-light |
@@ -114,6 +115,7 @@ modules/
   docker.nix                    # Docker daemon (opt-in per host)
 home/
   default.nix                   # Auto-imports all .nix files in this directory
+  ai.nix                        # sys-doctor (evidence bundle → Claude Code), boot-check service, skills symlinks
   fish.nix                      # Shell config and aliases
   helix.nix                     # Editor + LSP setup
   niri.nix                      # Waybar (tailscale, memory, network, bt, audio, battery — battery omitted on darkstar, a desktop with none), rofi, mako, swayidle, hyprlock, wallpaper
@@ -135,6 +137,9 @@ secrets/
 confs/
   niri/config.kdl               # Niri keybindings and layout (numlock enabled at startup)
   hyprlock.conf                 # Lock screen appearance
+agents/
+  skills/nixos-doctor/SKILL.md  # Agent skill: diagnose a sys-doctor evidence bundle
+  skills/nixos-config/SKILL.md  # Agent skill: how to change this repo safely
 templates/
   rust-nextjs-flake.nix         # Dev shell template: Rust + Next.js + Docker
 .sops.yaml                      # sops-nix encryption rules
@@ -252,6 +257,7 @@ All keybindings use `Mod` (Super/Windows key). Press `Mod+Shift+/` to open the k
 | `Mod+E` | File manager (Yazi) |
 | `Mod+Q` | Close window |
 | `Mod+Escape` | Power menu |
+| `Mod+Shift+D` | sys-doctor — evidence bundle + Claude Code diagnosis in a terminal |
 | `Mod+H/J/K/L` | Focus left/down/up/right |
 | `Mod+Ctrl+H/J/K/L` | Move window |
 | `Mod+Shift+H/J/K/L` | Focus monitor |

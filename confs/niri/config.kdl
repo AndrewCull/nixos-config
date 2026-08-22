@@ -132,6 +132,9 @@ binds {
     Mod+Q      { close-window; }
     Mod+Escape { spawn "power-menu"; }
 
+    // ── AI ──────────────────────────────────────────
+    Mod+Shift+D { spawn "sys-doctor"; }
+
     // ── Notifications ─────────────────────────────────
     Mod+N       { spawn "makoctl" "dismiss"; }
     Mod+Shift+N { spawn "makoctl" "dismiss" "--all"; }
