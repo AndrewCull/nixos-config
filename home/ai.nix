@@ -155,7 +155,11 @@ let
         # --max-turns plus the QUICK MODE instruction keep it to minutes, not a
         # full investigation. Interactive mode has no such limits.
         quickprompt="$prompt QUICK MODE: you have a small turn budget. Answer from the bundle files; run at most a few extra read-only commands to confirm the top finding, then write the report. Do not chase every container or secondary warning."
+        # Triage, not forensics: Opus is plenty for a verdict and much faster
+        # than the session default (Fable took ~4.5 min). Interactive mode keeps
+        # the default model for the deep dives. Override: SYS_DOCTOR_MODEL=...
         if ! claude -p "$quickprompt" \
+              --model "''${SYS_DOCTOR_MODEL:-claude-opus-5}" \
               --output-format text \
               --permission-mode dontAsk \
               --max-turns 25 \
