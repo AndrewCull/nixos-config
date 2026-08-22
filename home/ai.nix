@@ -143,7 +143,9 @@ let
         echo "$bundle"
         ;;
       interactive)
-        cd "$bundle" && exec claude --add-dir /etc/nixos-config "$prompt"
+        # Prompt must come BEFORE any variadic option (--add-dir <dirs...> would
+        # swallow it as another directory and claude starts idle).
+        cd "$bundle" && exec claude "$prompt"
         ;;
       quick)
         report="$bundle/report.md"
