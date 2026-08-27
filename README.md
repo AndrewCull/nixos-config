@@ -43,7 +43,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 |----------|-------|
 | Rust | rustc, cargo, clippy, rustfmt, rust-analyzer |
 | Node.js | nodejs 22, pnpm, typescript-language-server, vercel (via npm) |
-| Python | uv (Astral — package/project manager) |
+| Python | python3 (bare interpreter), uv (Astral — package/project manager) |
 | Nix | nil (LSP), nixfmt |
 | Git | git, gh (GitHub CLI), delta (diffs), lazygit |
 | Containers | Docker, dive (image explorer) |
@@ -269,6 +269,16 @@ The git setup layers several tools for different contexts:
 ## Adding Home-Manager Modules
 
 Drop a new `.nix` file in `home/` — it's automatically imported by `home/default.nix`. No need to touch any imports.
+
+## Keybindings (zellij)
+
+Floating panes, bound in `home/zellij.nix`. Each closes when the tool exits.
+
+| Key | Action |
+|-----|--------|
+| `Ctrl+y` | File viewer (yazi, with the preview stack from `home/dev.nix`) |
+| `Ctrl+g` | Git UI (lazygit) |
+| `Ctrl+b` | Work board — worktrees in flight, what is ready to dispatch, what needs a decision (`~/code/process/bin/board.sh`) |
 
 ## Keybindings (Niri)
 
