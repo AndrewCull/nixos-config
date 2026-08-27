@@ -1,0 +1,37 @@
+# Weekly `nix flake update` PR — the flake.lock equivalent of Dependabot,
+# which cannot read Nix flakes.
+#
+# Requires "Allow GitHub Actions to create and approve pull requests" under
+# Settings → Actions → General, or the default GITHUB_TOKEN cannot open the PR.
+#
+# Actions are pinned by commit SHA (tags are mutable); Dependabot bumps both the
+# SHA and the trailing version comment via .github/dependabot.yml.
+name: update-flake-lock
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+      - uses: DeterminateSystems/update-flake-lock@834c491b2ece4de0bbd00d85214bb5e83b4da5c6 # v28
+        with:
+          # Deliberately excludes nixpkgs-libinput: it is pinned to commit
+          # 68a8af93 to source libinput 1.29.2, because 1.31 stops enumerating
+          # the keyboard and touchpad on the P14s Gen 6. Updating it breaks
+          # input on that host. herdr is pinned to a release tag in its URL, so
+          # `nix flake update` cannot move it — bump the tag by hand.
+          inputs: nixpkgs home-manager stylix sops-nix niri
+          pr-title: "flake: weekly input update"
+          pr-labels: |
+            dependencies
+            automated

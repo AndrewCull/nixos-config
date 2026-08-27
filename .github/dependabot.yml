@@ -1,0 +1,15 @@
+# Dependabot does NOT support Nix flakes — there is no `nix` or `flake`
+# package-ecosystem. flake.lock is bumped by .github/workflows/update-flake-lock.yml
+# instead; this file keeps that workflow's own actions current, which is the
+# only supply-chain surface Dependabot can actually see in this repo.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "ci"
+    labels:
+      - dependencies

@@ -144,8 +144,27 @@ agents/
   skills/nixos-config/SKILL.md  # Agent skill: how to change this repo safely
 templates/
   rust-nextjs-flake.nix         # Dev shell template: Rust + Next.js + Docker
+.github/
+  dependabot.yml                # Keeps the workflow's action pins current
+  workflows/update-flake-lock.yml # Weekly `nix flake update` PR
 .sops.yaml                      # sops-nix encryption rules
 ```
+
+## Keeping Inputs Current
+
+Dependabot has no Nix ecosystem — it cannot read `flake.nix` or `flake.lock`. So the
+two halves are split:
+
+| File | Covers |
+|------|--------|
+| `.github/workflows/update-flake-lock.yml` | `flake.lock`. Runs `nix flake update` every Monday 06:00 UTC (or on `workflow_dispatch`) via `DeterminateSystems/update-flake-lock` and opens a PR. Limited to `nixpkgs home-manager stylix sops-nix niri` — **`nixpkgs-libinput` is excluded on purpose**, since it is pinned to commit `68a8af93` for libinput 1.29.2 and moving it kills keyboard/touchpad enumeration on the P14s. `herdr` pins its release tag inside the input URL, so `nix flake update` cannot move it either; bump that tag by hand. |
+| `.github/dependabot.yml` | The `github-actions` used by that workflow, weekly. Actions are pinned by commit SHA with a trailing `# vNN` comment (tags are mutable and thus a supply-chain risk); Dependabot bumps both. |
+
+The workflow needs **Settings → Actions → General → "Allow GitHub Actions to create and
+approve pull requests"** enabled, or the default `GITHUB_TOKEN` cannot open the PR.
+
+A merged lockfile PR is not applied to any machine until you run `rebuild` locally —
+review the diff, then rebuild, exactly as with a manual `update`.
 
 ## Flake Inputs
 
