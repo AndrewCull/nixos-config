@@ -4,6 +4,14 @@
 # Requires "Allow GitHub Actions to create and approve pull requests" under
 # Settings → Actions → General, or the default GITHUB_TOKEN cannot open the PR.
 #
+# This calls `nix flake update` and create-pull-request directly rather than
+# using DeterminateSystems/update-flake-lock. That composite (v28, the latest
+# release, Nov 2025) still pins create-pull-request v7.0.9 plus three helper
+# actions that declare `runs.using: node20`, so every run raised a Node 20
+# deprecation warning we had no way to configure away. Driving the two steps
+# ourselves keeps every action on node24 and drops four third-party
+# dependencies from a workflow that holds `contents: write`.
+#
 # Actions are pinned by commit SHA (tags are mutable); Dependabot bumps both the
 # SHA and the trailing version comment via .github/dependabot.yml.
 name: update-flake-lock
@@ -23,15 +31,38 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
-      - uses: DeterminateSystems/update-flake-lock@834c491b2ece4de0bbd00d85214bb5e83b4da5c6 # v28
+
+      # Inputs are listed explicitly. nixpkgs-libinput is deliberately absent:
+      # it is pinned to commit 68a8af93 to source libinput 1.29.2, because 1.31
+      # stops enumerating the keyboard and touchpad on the P14s. herdr pins its
+      # release tag inside the input URL, so `nix flake update` cannot move it
+      # either — bump that tag by hand.
+      - name: Update flake inputs
+        id: update
+        run: |
+          nix flake update nixpkgs home-manager stylix sops-nix niri 2>&1 | tee /tmp/update.log
+          {
+            echo 'log<<UPDATE_LOG_EOF'
+            cat /tmp/update.log
+            echo 'UPDATE_LOG_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
-          # Deliberately excludes nixpkgs-libinput: it is pinned to commit
-          # 68a8af93 to source libinput 1.29.2, because 1.31 stops enumerating
-          # the keyboard and touchpad on the P14s Gen 6. Updating it breaks
-          # input on that host. herdr is pinned to a release tag in its URL, so
-          # `nix flake update` cannot move it — bump the tag by hand.
-          inputs: nixpkgs home-manager stylix sops-nix niri
-          pr-title: "flake: weekly input update"
-          pr-labels: |
+          branch: update_flake_lock_action
+          title: "flake: weekly input update"
+          commit-message: "flake: weekly input update"
+          labels: |
             dependencies
             automated
+          body: |
+            Automated `nix flake update` of: nixpkgs, home-manager, stylix, sops-nix, niri.
+
+            `nixpkgs-libinput` is excluded on purpose (pinned for libinput 1.29.2 —
+            see the P14s input regression); `herdr` is tag-pinned in its input URL.
+
+            Merging this changes nothing on any machine until you pull and `rebuild`.
+
+            ```
+            ${{ steps.update.outputs.log }}
+            ```
