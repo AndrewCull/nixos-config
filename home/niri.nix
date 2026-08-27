@@ -169,6 +169,17 @@ let
     pwdump=${pkgs.pipewire}/bin/pw-dump
     notify=${pkgs.libnotify}/bin/notify-send
 
+    # ── Host shape ──
+    # Speaker mode resolves per host via the heuristic below, and both land on
+    # real speakers: p14s the built-in ALC257, darkstar the powered speakers on
+    # the rear line-out (the "first non-HDMI alsa sink" fallback). So Mod+P and
+    # Mod+Shift+P behave identically on both — no host branching needed here.
+    #
+    # EasyEffects is the one thing that differs: its convolver is a P14s
+    # laptop-speaker IR, so the service is p14s-only (see home/easyeffects.nix)
+    # and there is no unit to start/stop on darkstar.
+    manage_ee=${if isDarkstar then "0" else "1"}
+
     # Numeric node id of a sink by its node.name (empty if absent).
     sink_id() {
       $pwdump | $jq -r --arg n "$1" \
@@ -188,7 +199,7 @@ let
         fi
         id=''${bt%%|*}
         name=''${bt#*|}
-        systemctl --user stop easyeffects
+        [ "$manage_ee" = 1 ] && systemctl --user stop easyeffects
         $wpctl set-default "$id"
         $notify "🎧 Headphones" "$name"
         ;;
@@ -215,18 +226,63 @@ let
         # Point default at the speaker first (EE's output follows it there), then
         # start EE so pinned apps re-attach through it.
         $wpctl set-default "$spk"
-        systemctl --user start easyeffects
-        tries=0
-        while [ -z "$(sink_id easyeffects_sink)" ] && [ "$tries" -lt 30 ]; do
-          sleep 0.1; tries=$((tries + 1))
-        done
-        $notify "🔊 Speakers" "EasyEffects on"
+        if [ "$manage_ee" = 1 ]; then
+          systemctl --user start easyeffects
+          tries=0
+          while [ -z "$(sink_id easyeffects_sink)" ] && [ "$tries" -lt 30 ]; do
+            sleep 0.1; tries=$((tries + 1))
+          done
+          $notify "🔊 Speakers" "EasyEffects on"
+        else
+          $notify "🔊 Speakers" "Line out"
+        fi
         ;;
       *)
         echo "usage: audio-mode <speaker|headphones>" >&2
         exit 2
         ;;
     esac
+  '';
+
+  # ── Sink picker ────────────────────────────────────────
+  # rofi menu of every real output sink; picking one sets it as the default AND
+  # moves already-playing streams over (set-default alone only affects streams
+  # that start later, which is why "switching output" appears to do nothing
+  # while music is playing).
+  #
+  # This is the general form of audio-mode: audio-mode is the two-key fast path
+  # (Mod+P / Mod+Shift+P) that also manages the EasyEffects service, while this
+  # picks any sink without touching EE. Bound to Mod+O and waybar's volume
+  # left-click; right-click there opens pavucontrol for per-app routing.
+  sink-picker = pkgs.writeShellScriptBin "sink-picker" ''
+    set -eu
+    PACTL=${pkgs.pulseaudio}/bin/pactl
+    ROFI=${pkgs.rofi}/bin/rofi
+    default=$($PACTL get-default-sink)
+    mapfile -t lines < <($PACTL -f json list sinks | ${pkgs.jq}/bin/jq -r '.[] | "\(.name)\t\(.description)"')
+    menu=""
+    for l in "''${lines[@]}"; do
+      name="''${l%%	*}"
+      desc="''${l#*	}"
+      prefix="  "
+      [ "$name" = "$default" ] && prefix="● "
+      menu+="$prefix$desc"$'\n'
+    done
+    chosen=$(printf '%s' "$menu" | $ROFI -dmenu -i -p "Output" -theme-str 'window { width: 30%; }')
+    [ -z "$chosen" ] && exit 0
+    chosen="''${chosen#* }"
+    for l in "''${lines[@]}"; do
+      name="''${l%%	*}"
+      desc="''${l#*	}"
+      if [ "$desc" = "$chosen" ]; then
+        $PACTL set-default-sink "$name"
+        $PACTL list short sink-inputs | while read -r id _; do
+          $PACTL move-sink-input "$id" "$name" || true
+        done
+        ${pkgs.libnotify}/bin/notify-send "󰕾 Output" "$desc"
+        break
+      fi
+    done
   '';
 
   wallpaper-next = pkgs.writeShellScriptBin "wallpaper-next" ''
@@ -307,6 +363,12 @@ in
     waybar-launcher
     mic-mute-toggle
     audio-mode
+    sink-picker
+
+    # Audio GUIs / CLI. pavucontrol for per-app routing; pulseaudio here is just
+    # the client tools (pactl) — the pipewire-pulse daemon provides the server.
+    pavucontrol
+    pulseaudio
   ];
 
   # ── Waybar ──────────────────────────────────────────
@@ -405,35 +467,7 @@ in
           format = "{icon} {volume}%";
           format-icons = { default = [ "<span size='large'>󰕿</span>" "<span size='large'>󰖀</span>" "<span size='large'>󰕾</span>" ]; };
           format-muted = "<span size='large'>󰝟</span>";
-          on-click = "${pkgs.writeShellScript "rofi-sink-picker" ''
-            set -eu
-            PACTL=${pkgs.pulseaudio}/bin/pactl
-            ROFI=${pkgs.rofi}/bin/rofi
-            default=$($PACTL get-default-sink)
-            mapfile -t lines < <($PACTL -f json list sinks | ${pkgs.jq}/bin/jq -r '.[] | "\(.name)\t\(.description)"')
-            menu=""
-            for l in "''${lines[@]}"; do
-              name="''${l%%	*}"
-              desc="''${l#*	}"
-              prefix="  "
-              [ "$name" = "$default" ] && prefix="● "
-              menu+="$prefix$desc"$'\n'
-            done
-            chosen=$(printf '%s' "$menu" | $ROFI -dmenu -i -p "Output" -theme-str 'window { width: 30%; }')
-            [ -z "$chosen" ] && exit 0
-            chosen="''${chosen#* }"
-            for l in "''${lines[@]}"; do
-              name="''${l%%	*}"
-              desc="''${l#*	}"
-              if [ "$desc" = "$chosen" ]; then
-                $PACTL set-default-sink "$name"
-                $PACTL list short sink-inputs | while read -r id _; do
-                  $PACTL move-sink-input "$id" "$name" || true
-                done
-                break
-              fi
-            done
-          ''}";
+          on-click = "${sink-picker}/bin/sink-picker";
           on-click-right = "${pkgs.pavucontrol}/bin/pavucontrol";
         };
 

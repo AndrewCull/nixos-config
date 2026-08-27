@@ -150,6 +150,7 @@ binds {
     // ── Audio output ─────────────────────────────────
     Mod+P       { spawn "audio-mode" "headphones"; }
     Mod+Shift+P { spawn "audio-mode" "speaker"; }
+    Mod+O       { spawn "sink-picker"; }
 
     // ── Focus (vim) ─────────────────────────────────
     Mod+H     { focus-column-left; }
