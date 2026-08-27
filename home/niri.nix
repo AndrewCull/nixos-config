@@ -285,6 +285,34 @@ let
     done
   '';
 
+  # Clipboard-history picker. cliphist stores entries as "<id>\t<preview>";
+  # rofi hands the whole line back, and `cliphist decode` resolves it to the
+  # original bytes (which may be an image, not text).
+  clip-picker = pkgs.writeShellScriptBin "clip-picker" ''
+    set -eu
+    CLIPHIST=${pkgs.cliphist}/bin/cliphist
+    ROFI=${pkgs.rofi}/bin/rofi
+    WLCOPY=${pkgs.wl-clipboard}/bin/wl-copy
+
+    chosen=$($CLIPHIST list | $ROFI -dmenu -i -p "Clipboard" -theme-str 'window { width: 45%; }')
+    [ -z "$chosen" ] && exit 0
+
+    # Image entries preview as "[[ binary data ... png ... ]]" — copy those back
+    # with their real MIME type, or the paste target sees the preview as text.
+    case "$chosen" in
+      *"binary data"*)
+        fmt=$(printf '%s' "$chosen" \
+          | ${pkgs.gnugrep}/bin/grep -oE 'png|jpe?g|gif|webp|bmp' \
+          | ${pkgs.coreutils}/bin/head -1)
+        [ "$fmt" = "jpg" ] && fmt=jpeg
+        printf '%s' "$chosen" | $CLIPHIST decode | $WLCOPY --type "image/''${fmt:-png}"
+        ;;
+      *)
+        printf '%s' "$chosen" | $CLIPHIST decode | $WLCOPY
+        ;;
+    esac
+  '';
+
   wallpaper-next = pkgs.writeShellScriptBin "wallpaper-next" ''
     dir="$HOME/wallpapers"
     state="$HOME/.config/current-wallpaper"
@@ -364,6 +392,7 @@ in
     mic-mute-toggle
     audio-mode
     sink-picker
+    clip-picker
 
     # Audio GUIs / CLI. pavucontrol for per-app routing; pulseaudio here is just
     # the client tools (pactl) — the pipewire-pulse daemon provides the server.
@@ -646,6 +675,16 @@ in
       Restart = "on-failure";
     };
     Install.WantedBy = [ "graphical-session.target" ];
+  };
+
+  # ── Clipboard history ───────────────────────────────
+  # A Wayland selection lives in the app that owns it and dies with it, so
+  # nothing survives closing the source window. cliphist watches the seat and
+  # persists entries; before this, nothing ever started the watcher, so
+  # `cliphist list` stayed empty. Picker: clip-picker, bound to Mod+Ctrl+V.
+  services.cliphist = {
+    enable = true;
+    allowImages = true;
   };
 
   # ── Swayidle ────────────────────────────────────────

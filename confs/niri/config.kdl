@@ -139,6 +139,11 @@ binds {
     Mod+N       { spawn "makoctl" "dismiss"; }
     Mod+Shift+N { spawn "makoctl" "dismiss" "--all"; }
 
+    // ── Clipboard ───────────────────────────────────
+    // Not Mod+Alt+V: modules/mxkeys.nix remaps the MX Keys' left Alt to Super,
+    // so that chord has no reachable left-hand form on this keyboard.
+    Mod+Ctrl+V { spawn "clip-picker"; }
+
     // ── Media keys ─────────────────────────────────
     XF86AudioRaiseVolume allow-when-locked=true { spawn "pamixer" "-i" "5"; }
     XF86AudioLowerVolume allow-when-locked=true { spawn "pamixer" "-d" "5"; }
