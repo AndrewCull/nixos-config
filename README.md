@@ -174,6 +174,9 @@ review the diff, then rebuild, exactly as with a manual `update`.
 | [home-manager](https://github.com/nix-community/home-manager) | User-level config |
 | [stylix](https://github.com/danth/stylix) | Consistent theming |
 | [sops-nix](https://github.com/Mic92/sops-nix) | Secrets management |
+| [niri-flake](https://github.com/sodiboo/niri-flake) | niri itself, pinned independently of the nixpkgs release cadence (exposes `pkgs.niri-stable` / `pkgs.niri-unstable`) |
+| [herdr](https://github.com/ogulcancelik/herdr) | Agent multiplexer TUI, not in nixpkgs. Pinned to a release tag **inside the input URL**, so `nix flake update` cannot move it — bump the tag by hand |
+| nixpkgs (pinned, `68a8af93`) | `nixpkgs-libinput`. Sources two packages the current unstable can no longer provide, both via overlays in `modules/niri.nix`: **libinput 1.29.2** (1.31 stops enumerating the P14s keyboard/touchpad) and **libdisplay-info 0.2.0** (nixpkgs replaced `libdisplay-info_0_2` with a throw alias in 2026-08; niri-flake still asserts exactly 0.2.0, and its `? libdisplay-info` fallback never fires because the alias is present rather than absent). Excluded from the automated lockfile updates — see [Keeping Inputs Current](#keeping-inputs-current) |
 
 ## Getting Started
 
