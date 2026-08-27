@@ -10,10 +10,20 @@
   # 2026-05-13 and it stopped enumerating the internal keyboard / Elan
   # touchpad on this ThinkPad P14s Gen 6 AMD. Niri then runs but with no
   # input devices. Pin to 1.29.2 sourced from the older nixpkgs input.
+  # libdisplay-info overlay: nixpkgs dropped `libdisplay-info_0_2` around
+  # 2026-08 (replaced by a throw alias, not deleted). niri-flake's package
+  # declares `libdisplay-info_0_2 ? libdisplay-info` — a fallback that only
+  # fires when the attribute is *absent*, so the surviving throw alias is
+  # passed through and evaluation dies with "has been removed". Its
+  # `assert libdisplay-info_0_2.version == "0.2.0"` also rules out simply
+  # substituting 0.3/0.4, so source the real 0.2.0 from the same pinned
+  # nixpkgs we already keep for libinput. Drop this once niri-flake moves
+  # off the 0.2 pin (its last release was 2026-08-04).
   nixpkgs.overlays = [
     inputs.niri.overlays.niri
     (final: prev: {
       libinput = inputs.nixpkgs-libinput.legacyPackages.${prev.stdenv.hostPlatform.system}.libinput;
+      libdisplay-info_0_2 = inputs.nixpkgs-libinput.legacyPackages.${prev.stdenv.hostPlatform.system}.libdisplay-info_0_2;
     })
   ];
 
