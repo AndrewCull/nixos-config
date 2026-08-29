@@ -326,6 +326,7 @@ All keybindings use `Mod` (Super/Windows key). Press `Mod+Shift+/` to open the k
 | `cat` | `bat` |
 | `cd` | `z` (zoxide) |
 | `netcheck [host]` | Split WiFi-link vs upstream-internet health check (signal, latency, packet loss) — tells at a glance whether a video stutter is local WiFi or the Starlink uplink |
+| `eng [name]` | Attach-or-create the zellij session for an engagement from `~/code/<name>/` or `~/projects/<name>/` `.zellij/layout.kdl` (one session per engagement; tabs per repo/role). `eng` alone lists engagements + sessions |
 
 ## License
 
