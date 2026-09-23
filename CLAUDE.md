@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-NixOS flake-based system configuration for andrew's machines. Currently one host (`p14s` — ThinkPad P14s Gen 6, AMD). Uses nixpkgs unstable channel.
+NixOS flake-based system configuration for andrew's machines. Two hosts: `p14s` (ThinkPad P14s Gen 6, AMD) and `darkstar` (AM5 desktop — Ryzen 9000 / Granite Ridge, Radeon RX 9070 XT, 32" BenQ RD320U at 4K). Uses nixpkgs unstable channel.
 
 ## Key Commands
 
@@ -16,7 +16,7 @@ rebuild    # → sudo nixos-rebuild switch --flake /etc/nixos-config#(hostname)
 update     # → nix flake update /etc/nixos-config
 
 # Dry-run build (check for errors without applying)
-nixos-rebuild dry-build --flake /etc/nixos-config#p14s
+nixos-rebuild dry-build --flake /etc/nixos-config#p14s   # or #darkstar
 
 # Clean old generations
 nix-collect-garbage -d
@@ -32,11 +32,11 @@ nix-collect-garbage -d
 **modules/** — System-level NixOS modules:
 - `common.nix` — Boot, networking, users, nix settings, pipewire, stylix theming (gruvbox dark), shell
 - `niri.nix` — Niri Wayland compositor setup, greetd, portals
-- `docker.nix` — Docker daemon (only added to p14s)
+- `docker.nix` — Docker daemon (imported by both hosts)
 
 **home/** — Home-manager modules (user-level config). `default.nix` auto-imports every `.nix` file in the directory, so adding a new file here automatically includes it. Key modules: fish, helix, niri (waybar/fuzzel/mako/swaylock/swayidle/swaybg), git, dev tools, apps, ghostty, starship, theme, zellij.
 
-**hosts/p14s/** — Host-specific: AMD GPU, power management, fingerprint reader, lid behavior.
+**hosts/<hostname>/** — Per-machine hardware and overrides. `p14s/`: AMD GPU, TLP power management, fingerprint reader, lid behavior. `darkstar/`: latest kernel, `amd_pstate=active`, hang forensics (watchdog, panic sysctls, crash dump), 4K font/cursor scaling.
 
 **templates/** — Reusable flake templates for per-project dev shells.
 
