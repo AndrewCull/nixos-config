@@ -10,13 +10,13 @@ NixOS flake-based system configuration for andrew's machines. Currently one host
 
 ```bash
 # Rebuild system after config changes (fish alias)
-rebuild    # → sudo nixos-rebuild switch --flake ~/nixos-config#(hostname)
+rebuild    # → sudo nixos-rebuild switch --flake /etc/nixos-config#(hostname)
 
 # Update flake inputs
-update     # → nix flake update ~/nixos-config
+update     # → nix flake update /etc/nixos-config
 
 # Dry-run build (check for errors without applying)
-nixos-rebuild dry-build --flake ~/nixos-config#p14s
+nixos-rebuild dry-build --flake /etc/nixos-config#p14s
 
 # Clean old generations
 nix-collect-garbage -d
@@ -45,7 +45,7 @@ nix-collect-garbage -d
 ## Conventions
 
 - User is `andrew`, shell is fish, editor is helix (`hx`)
-- The config lives at `/etc/nixos-config` (or `~/nixos-config` via alias)
+- The config lives at `/etc/nixos-config`; `nxc` jumps there. There is no `~/nixos-config` — the `rebuild` and `update` aliases use the absolute path
 - Home-manager uses `useGlobalPkgs` and `useUserPackages` — packages come from the system nixpkgs
 - `home/default.nix` auto-imports all sibling `.nix` files; no need to manually add imports when creating new home modules
 - `stateVersion` is `"26.05"` — only bump deliberately, with state migrations handled (e.g. Firefox profile path moved to `$XDG_CONFIG_HOME/mozilla/firefox`)
