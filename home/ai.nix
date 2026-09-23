@@ -18,8 +18,10 @@ let
     (lib.filterAttrs (_: t: t == "directory") (builtins.readDir skillsDir));
 
   # Tools the scripts shell out to. claude, ghostty, niri, tailscale, wpctl come
-  # from the user PATH (claude is npm-global, not nixpkgs) — PATH is extended
-  # below so the systemd user service sees them too.
+  # from the user PATH (claude is the nixpkgs claude-code, installed via
+  # home.packages in apps.nix and fast-tracked past nixpkgs by
+  # confs/claude-code-manifest.json) — PATH is extended below so the systemd
+  # user service sees them too.
   toolPath = lib.makeBinPath (with pkgs; [
     procps coreutils gnugrep gawk gnused findutils util-linux jq
     systemd            # journalctl, systemctl, coredumpctl, resolvectl

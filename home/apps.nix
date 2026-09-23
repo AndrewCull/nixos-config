@@ -271,6 +271,16 @@ in
       nodejs_22
       pnpm
 
+      # Fast-tracked ahead of nixpkgs. The package takes an overridable
+      # `manifest` argument and derives both its version and the binary's
+      # checksum from it, so pinning our own copy is enough to move it — no
+      # hash to recompute. confs/claude-code-manifest.json is refreshed daily
+      # by .github/workflows/claude-code-bump.yml, which keeps Claude Code on
+      # the day's release without dragging the kernel along on the same bump.
+      (claude-code.override {
+        manifest = lib.importJSON ../confs/claude-code-manifest.json;
+      })
+
       # databases
       postgresql # psql client
       tableplus # GUI database client

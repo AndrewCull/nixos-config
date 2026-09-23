@@ -23,7 +23,7 @@
   # keeping — sys-doctor reads `coredumpctl`, and a core is often the only
   # trace a crashed process leaves — but a browser or compiler dump runs to
   # hundreds of MiB, so a few recent ones is all the history that is useful.
-  systemd.coredump.extraConfig = "MaxUse=256M";
+  systemd.coredump.settings.Coredump.MaxUse = "256M";
 
   # ── Networking ────────────────────────────────────────
   networking.networkmanager.enable = true;
