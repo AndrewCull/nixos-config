@@ -17,6 +17,14 @@
   # Unused on this machine — blacklist the whole NFC stack.
   boot.blacklistedKernelModules = [ "nxp_nci_i2c" "nxp_nci" "nci" "nfc" ];
 
+  # ── Core dumps ────────────────────────────────────────
+  # systemd's default MaxUse is 10% of /var, which had let
+  # /var/lib/systemd/coredump grow to ~1 GiB on darkstar. The dumps are worth
+  # keeping — sys-doctor reads `coredumpctl`, and a core is often the only
+  # trace a crashed process leaves — but a browser or compiler dump runs to
+  # hundreds of MiB, so a few recent ones is all the history that is useful.
+  systemd.coredump.extraConfig = "MaxUse=256M";
+
   # ── Networking ────────────────────────────────────────
   networking.networkmanager.enable = true;
 
