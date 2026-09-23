@@ -19,7 +19,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 | Night Mode | wlsunset (eDP-1 only, 4000K night / 6500K day, 20:00–07:00) |
 | Screenshots | grim + slurp |
 | Clipboard | wl-clipboard + cliphist |
-| AI tooling | `sys-doctor` (`Mod+Shift+D`): gathers an evidence bundle (journal errors/warnings, kernel log, failed units, coredumps, thermal, memory/PSI, disk, battery, network + tailscale, `wpctl status`, niri outputs, top processes; `--last-boot` adds the previous boot, pstore and /var/crash) into `~/.cache/sys-doctor/<ts>/` and opens Claude Code in it with the `nixos-doctor` skill. `--quick` runs `claude -p` (Opus by default, `SYS_DOCTOR_MODEL` overrides; interactive mode uses the session default) with read-only tools and posts the `VERDICT:` line as a notification ("Open report" → glow). `sys-doctor-boot-check` (user service) offers "Diagnose with AI" on the first login after a boot that did not end cleanly. Agent skills live in `agents/skills/` (`nixos-doctor`, `nixos-config`) and are symlinked into `~/.claude/skills/` by `home/ai.nix` (out-of-store, so edits are live). |
+| AI tooling | `sys-doctor` (`Mod+Shift+D`): gathers an evidence bundle (journal errors/warnings, kernel log, failed units, coredumps, thermal, memory/PSI, disk, battery, network + tailscale, `wpctl status`, niri outputs, top processes; `--last-boot` adds the previous boot, pstore and /var/crash) into `~/.cache/sys-doctor/<ts>/` and opens Claude Code in it with the `nixos-doctor` skill. `--quick` runs `claude -p` (Opus by default, `SYS_DOCTOR_MODEL` overrides; interactive mode uses the session default) with read-only tools and posts the `VERDICT:` line as a notification ("Open report" → glow). `sys-doctor-boot-check` (user service) offers "Diagnose with AI" on the first login after a boot that did not end cleanly. Agent skills live in `agents/skills/` (`nixos-doctor`, `nixos-config`) and are symlinked into `~/.claude/skills/` by `home/ai.nix` (out-of-store, so edits are live). Claude Code itself is the nixpkgs `claude-code` package, pinned ahead of nixpkgs by `confs/claude-code-manifest.json` and bumped daily — see [Keeping Inputs Current](#keeping-inputs-current). The package's own wrapper already sets `DISABLE_AUTOUPDATER=1`, so the binary never tries to rewrite its read-only store path. |
 | Theme | Gruvbox Dark Medium (via Stylix) |
 | Icons | Papirus-Dark |
 | Cursor | phinger-cursors-light |
@@ -43,7 +43,7 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 |----------|-------|
 | Rust | rustc, cargo, clippy, rustfmt, rust-analyzer |
 | Node.js | nodejs 22, pnpm, typescript-language-server, vercel (via npm) |
-| Python | uv (Astral — package/project manager) |
+| Python | python3 (bare interpreter), uv (Astral — package/project manager) |
 | Nix | nil (LSP), nixfmt |
 | Git | git, gh (GitHub CLI), delta (diffs), lazygit |
 | Containers | Docker, dive (image explorer) |
@@ -100,7 +100,10 @@ Currently configured for one host — **ThinkPad P14s Gen 6 (AMD)**. MacBook-sty
 | OpenRGB | RGB lighting control for the Sapphire RX 9070 (darkstar only) — `motherboard = "amd"` loads the I2C modules needed to reach the GPU's controller. Set a profile in the GUI, then point `startupProfile` at it to auto-apply on boot. |
 | GPU diagnostics | `glxinfo` (mesa-demos), `vulkaninfo` (vulkan-tools) and `vainfo` (libva-utils) for OpenGL/Vulkan/VA-API renderer sanity checks (darkstar only) |
 | Audio routing (darkstar) | darkstar has three HDA cards: the RX 9070's HDMI/DP audio (`pci-0000_03_00.1`, the one the BenQ RD320U is actually on), the Granite Ridge iGPU's HDMI audio (`pci-0000_7c_00.1`, nothing plugged in) and the motherboard analog codec (`pci-0000_7c_00.6`). With nothing connected to the latter two, every one of their normal profiles reports `available: no`, so WirePlumber can fall back to their `pro-audio` profile — which exposes each raw HDMI pin as a sink regardless of whether a display is attached — and pin one as the default. Playing into a link-less HDMI pin gives no sound *and* slow-motion/garbled video in Chrome and Teams, because both slave the video clock to the audio sink. Fix is to pin the profiles (`7c_00.1` → `off`, `7c_00.6` → `output:analog-stereo+input:analog-stereo`) and the default sink to `alsa_output.pci-0000_03_00.1.hdmi-stereo-extra3`. Verify with `wpctl status` (streams should read `BenQ RD320U:playback_FL/FR`) and `/proc/asound/card*/eld*` (`monitor_present 1` marks the live pin). WirePlumber persists this in `~/.local/state/wireplumber/{default-profile,default-nodes}`, so a bad choice sticks across reboots until those are cleared. |
+| WiFi (darkstar) | The Qualcomm WCN7850 (Wi-Fi 7, `ath12k`) loses datapath peer state whenever it roams between the Starlink's 5 GHz (`…:65:05:87`, ch36) and 6 GHz (`…:65:05:88`, 7015 MHz) radios. Every roam is followed *in the same second* by a burst of `ath12k … dp_tx: failed to find the peer with peer_id 0`, and sometimes by `AMD-Vi: IO_PAGE_FAULT` on `0000:0c:00.0` — the card DMA-ing into buffers freed during peer teardown. TX then dies while the interface still reports `associated`, so the machine looks connected and moves no packets; NM eventually gives up and logs `deauthenticating … by local choice (Reason: 3=DEAUTH_LEAVING)`. **That deauth is the recovery, not the cause** — dockerd and tailscaled report `network is unreachable` seconds *before* it, so `locally_generated=1` is misleading here. At 55/100 signal the client sits right at the band-steering threshold and ping-ponged 20–45 times a day, escalating to a full drop twice inside 30 minutes on 2026-09-08 (only 3 full drops in the preceding fortnight, so the flapping is chronic and the drops are the tail). Fix is to remove the trigger: the `Starlink` profile is pinned to the 5 GHz BSSID, which stops the 5↔6 GHz flapping at the cost of not failing over to the second mesh node (`E8:D3:EB:60:CC:C6`) — acceptable on a desktop that does not move. **That pin is imperative state** under `/etc/NetworkManager/system-connections/`, not in this flake, because the PSK is not in sops; re-apply after a reinstall with `nmcli connection modify Starlink 802-11-wireless.bssid E8:D3:EB:65:05:87` (then `nmcli connection up Starlink`). If drops continue *without* roams preceding them, the remaining lever is a newer kernel/`linux-firmware` — `ath12k` peer-teardown fixes land often, and this is fw `WLAN.HMT.1.1.c7-00108` on 7.1.4. |
+| Network diagnostics | `networking.networkmanager.logLevel = "INFO"` (NM's own default is `WARN`, which logs *nothing* when it tears down and re-establishes a link — both 2026-09-08 WiFi outages left an empty `journalctl -u NetworkManager` even though NM issued the disconnect; the connectivity-lost → reconnect decisions that explain a drop are INFO). `iw` is on PATH for the per-BSS link stats `nmcli` cannot show — `iw dev wlp12s0 link` for signal and negotiated rate, `iw dev wlp12s0 scan` for what else is on the channel. Pair with `journalctl -k | grep -E 'dp_tx|for new auth|deauthenticating'` to tell a roam-triggered driver stall from a real RF drop. |
 | Hang forensics (darkstar) | darkstar hard-locked on 2026-08-11 with no trace at all — journal cut off mid-line, `/sys/fs/pstore` empty, no OOM/MCE/GPU-reset/thermal event — then sat dead ~8h because nothing was watching. Leading suspect is the memory OC (2×48 GiB dual-rank G.Skill F5-6000J3036F48G trained at 5600 MT/s, above AMD's qualified ceiling for two dual-rank UDIMMs on AM5); that fix is BIOS-side (drop to 5200, or raise VSOC ≈1.25 V / VDDIO ≈1.2 V and confirm FCLK 2000 MHz). The config side makes the next one survivable: `systemd.settings.Manager.RuntimeWatchdogSec = "30s"` finally arms the board's SP5100 TCO watchdog at `/dev/watchdog` (30s without userspace scheduling → hardware reset); `kernel.panic = 10` / `panic_on_oops = 1` / `hardlockup_panic = 1` turn halt-forever into reboot-and-dump; `boot.crashDump.enable` with 512M reserved kexecs a crash kernel for a real `/proc/vmcore`. Caveat: `boot.crashDump` also forces `softlockup_panic=1` kernel-wide, so a >20s CPU stall (heavy NVMe/docker IO can do it) reboots too — drop that one option if it causes spurious reboots, the watchdog and sysctls are independent. Note a true hard lockup still leaves pstore empty; that silence is itself the confirming datum. |
+| Core dump cap | `systemd.coredump.settings.Coredump.MaxUse = "256M"` (the older `systemd.coredump.extraConfig` was removed in nixpkgs and now fails the build with a pointer to this option). systemd's default `MaxUse` is 10% of `/var`, which had let `/var/lib/systemd/coredump` reach ~1 GiB on darkstar. Dumps stay enabled — `sys-doctor` reads `coredumpctl`, and a core is often the only trace a crashed process leaves — but a browser or compiler dump runs to hundreds of MiB, so only the few most recent are worth retaining. systemd rotates the oldest out once the cap is hit. |
 | Memtest86+ | `boot.loader.systemd-boot.memtest86.enable` (darkstar) — memory test from the boot menu. Will not reproduce an idle-hours AM5 lockup; only uptime tests that. |
 | Blueman | Bluetooth management |
 | GNOME Keyring | Secret storage (auto-unlocks on password login) |
@@ -139,14 +142,16 @@ secrets/
 confs/
   niri/config.kdl               # Niri keybindings and layout (numlock enabled at startup)
   hyprlock.conf                 # Lock screen appearance
+  claude-code-manifest.json     # Pinned Claude Code release (version + binary checksum)
 agents/
   skills/nixos-doctor/SKILL.md  # Agent skill: diagnose a sys-doctor evidence bundle
   skills/nixos-config/SKILL.md  # Agent skill: how to change this repo safely
 templates/
   rust-nextjs-flake.nix         # Dev shell template: Rust + Next.js + Docker
 .github/
-  dependabot.yml                # Keeps the workflow's action pins current
+  dependabot.yml                # Keeps the workflows' action pins current
   workflows/update-flake-lock.yml # Weekly `nix flake update` PR
+  workflows/claude-code-bump.yml  # Daily Claude Code manifest PR
 .sops.yaml                      # sops-nix encryption rules
 ```
 
@@ -158,7 +163,8 @@ two halves are split:
 | File | Covers |
 |------|--------|
 | `.github/workflows/update-flake-lock.yml` | `flake.lock`. Runs `nix flake update` every Monday 06:00 UTC (or on `workflow_dispatch`) and opens a PR via `peter-evans/create-pull-request`. It calls those two steps directly rather than using `DeterminateSystems/update-flake-lock`: that composite's latest release (v28) still pins four helper actions declaring `runs.using: node20`, which raised a Node 20 deprecation warning on every run with no way to configure it away. Driving it ourselves keeps every action on `node24` and removes four third-party dependencies from a workflow holding `contents: write`. Limited to `nixpkgs home-manager stylix sops-nix niri` — **`nixpkgs-libinput` is excluded on purpose**, since it is pinned to commit `68a8af93` for libinput 1.29.2 and moving it kills keyboard/touchpad enumeration on the P14s. `herdr` pins its release tag inside the input URL, so `nix flake update` cannot move it either; bump that tag by hand. |
-| `.github/dependabot.yml` | The `github-actions` used by that workflow, weekly. Actions are pinned by commit SHA with a trailing `# vNN` comment (tags are mutable and thus a supply-chain risk); Dependabot bumps both. |
+| `.github/workflows/claude-code-bump.yml` | `confs/claude-code-manifest.json`. Runs daily at 07:00 UTC (or on `workflow_dispatch`) and opens a PR when a new Claude Code release exists. Claude Code ships roughly every day, so riding the weekly lock bump would mean either lagging a week or taking a kernel/mesa update every time a CLI release landed — the two want different cadences, so they get different jobs. The nixpkgs package exposes an overridable `manifest` argument and derives *both* its version and the binary's SHA-256 from it, so the bump is a single JSON file swap: no hash to recompute, no derivation to patch. It reads the same `latest` channel as nixpkgs' own `update.sh` (note `stable` is a separate, older pointer — it was 2.1.267 when `latest` was 2.1.280), and fails the run if the returned manifest's version disagrees with the one requested or omits the `linux-x64` entry. Because the manifest is still a pin, a bad release rolls back like any other generation. |
+| `.github/dependabot.yml` | The `github-actions` used by those workflows, weekly. Actions are pinned by commit SHA with a trailing `# vNN` comment (tags are mutable and thus a supply-chain risk); Dependabot bumps both. |
 
 The workflow needs **Settings → Actions → General → "Allow GitHub Actions to create and
 approve pull requests"** enabled, or the default `GITHUB_TOKEN` cannot open the PR.
@@ -270,6 +276,16 @@ The git setup layers several tools for different contexts:
 
 Drop a new `.nix` file in `home/` — it's automatically imported by `home/default.nix`. No need to touch any imports.
 
+## Keybindings (zellij)
+
+Floating panes, bound in `home/zellij.nix`. Each closes when the tool exits.
+
+| Key | Action |
+|-----|--------|
+| `Ctrl+y` | File viewer (yazi, with the preview stack from `home/dev.nix`) |
+| `Ctrl+g` | Git UI (lazygit) |
+| `Ctrl+b` | Work board — worktrees in flight, what is ready to dispatch, what needs a decision (`~/code/process/bin/board.sh`) |
+
 ## Keybindings (Niri)
 
 All keybindings use `Mod` (Super/Windows key). Press `Mod+Shift+/` to open the keybindings cheat sheet in Rofi.
@@ -316,6 +332,7 @@ All keybindings use `Mod` (Super/Windows key). Press `Mod+Shift+/` to open the k
 | `cat` | `bat` |
 | `cd` | `z` (zoxide) |
 | `netcheck [host]` | Split WiFi-link vs upstream-internet health check (signal, latency, packet loss) — tells at a glance whether a video stutter is local WiFi or the Starlink uplink |
+| `eng [name]` | Attach-or-create the zellij session for an engagement from `~/code/<name>/` or `~/projects/<name>/` `.zellij/layout.kdl` (one session per engagement; tabs per repo/role). `eng` alone lists engagements + sessions |
 
 ## License
 

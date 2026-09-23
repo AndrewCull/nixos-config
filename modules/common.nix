@@ -17,8 +17,23 @@
   # Unused on this machine — blacklist the whole NFC stack.
   boot.blacklistedKernelModules = [ "nxp_nci_i2c" "nxp_nci" "nci" "nfc" ];
 
+  # ── Core dumps ────────────────────────────────────────
+  # systemd's default MaxUse is 10% of /var, which had let
+  # /var/lib/systemd/coredump grow to ~1 GiB on darkstar. The dumps are worth
+  # keeping — sys-doctor reads `coredumpctl`, and a core is often the only
+  # trace a crashed process leaves — but a browser or compiler dump runs to
+  # hundreds of MiB, so a few recent ones is all the history that is useful.
+  systemd.coredump.settings.Coredump.MaxUse = "256M";
+
   # ── Networking ────────────────────────────────────────
   networking.networkmanager.enable = true;
+
+  # NM ships at WARN, which logs *nothing* when a link drops and comes back:
+  # the two darkstar WiFi outages on 2026-09-08 left an empty NM journal even
+  # though NM itself tore the association down. Its "connectivity lost →
+  # reconnect" decisions are INFO, so that is the floor for a drop to be
+  # diagnosable after the fact.
+  networking.networkmanager.logLevel = "INFO";
   networking.firewall.enable = true;
   networking.firewall.allowedTCPPorts = [ 8081 ];
 
@@ -97,6 +112,8 @@
     unzip
     busybox
     alsa-utils
+    iw            # 802.11 link/station/survey stats — nmcli cannot show
+                  # signal, negotiated rate or roam history per-BSS
     sops # CLI for editing secrets/secrets.yaml (sops-nix only decrypts at build time)
     age # age keygen/encryption backend for sops
     simple-scan   # GUI front-end for SANE scanners

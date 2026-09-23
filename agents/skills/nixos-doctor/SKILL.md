@@ -99,7 +99,25 @@ speculating; many "errors" are already understood.
 - Audio trap: three HDA cards; WirePlumber can pick a link-less HDMI pin (iGPU
   `pci-0000_7c_00.1`) as default sink → no sound *and* slow-motion video in
   Chrome/Teams. The right default is `alsa_output.pci-0000_03_00.1.hdmi-stereo-extra3`
-  (BenQ RD320U). Check `audio.txt` first for any video-stutter complaint.
+  (BenQ RD320U) when sound goes to the monitor; the motherboard analog sink
+  (`alsa_output.pci-0000_7c_00.6.analog-stereo`) is also legitimate — andrew
+  plugs wired speakers in at times — so confirm rather than alarm on it. Only
+  the `7c_00.1` pin is known-bad. Check `audio.txt` first for any video-stutter
+  complaint.
+- Phantom IO pressure: `/proc/pressure/io` and `vmstat` iowait sit at ~90% /
+  ~35% whenever a ghostty window is open — its io_uring completion waits are
+  accounted as iowait (per-cgroup PSI pins it to `app-niri-ghostty-*.scope`,
+  threads in `io_cqring_wait`, `io.stat` empty). Never headline PSI IO on
+  darkstar from the number alone: cross-check `vmstat 1 3` bi/bo, D-state
+  processes (`ps -eo stat,comm | awk '$1 ~ /^D/'`) and
+  `/sys/block/nvme*/inflight`; all zero ⇒ artifact, not disk.
+- Docker restart loops: a container with `restart: unless-stopped` whose
+  dependency is gone restarts every ~25s and floods `docker.service` with
+  error-priority stdout (seen 2026-08-22: 282k lines / 4G journal in 9 days,
+  evicting the forensic boots). If `journal-errors.txt` shows a huge
+  docker.service count, run `docker ps --format '{{.Names}}\t{{.Status}}'` and
+  look for "Up N seconds" on a long-uptime host, then
+  `docker inspect --format '{{.RestartCount}}' <name>`.
 - No battery: any battery/upower error is noise; waybar's battery module is
   omitted on purpose.
 

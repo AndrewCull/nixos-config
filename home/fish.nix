@@ -114,6 +114,44 @@
             set_color normal
         end
       '';
+
+      # eng — attach-or-create the zellij session for a client engagement.
+      # One session per engagement; tabs/panes come from ~/code/<name>/.zellij/layout.kdl
+      # (written by the ~/code/process toolkit). If the session already exists the
+      # layout is ignored and you just re-attach. `eng` alone lists engagements.
+      eng = ''
+        set -l roots ~/code ~/projects
+        if test -z "$argv[1]"
+            set_color cyan; echo "engagements (~/code, ~/projects — dirs with .zellij/layout.kdl):"; set_color normal
+            for root in $roots
+                for d in $root/*/
+                    test -f $d/.zellij/layout.kdl; and echo "  "(basename $d)
+                end
+            end
+            echo
+            zellij list-sessions 2>/dev/null
+            return
+        end
+        set -l name $argv[1]
+        set -l dir
+        for root in $roots
+            test -d $root/$name; and set dir $root/$name; and break
+        end
+        if test -z "$dir"
+            echo "eng: no engagement dir named $name under $roots" >&2
+            return 1
+        end
+        if set -q ZELLIJ
+            echo "eng: already inside zellij session $ZELLIJ_SESSION_NAME — detach first (Ctrl-o d)" >&2
+            return 1
+        end
+        cd $dir
+        if test -f $dir/.zellij/layout.kdl
+            zellij --layout $dir/.zellij/layout.kdl attach -c $name
+        else
+            zellij attach -c $name
+        end
+      '';
     };
 
     interactiveShellInit = ''

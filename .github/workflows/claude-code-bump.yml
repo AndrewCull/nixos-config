@@ -1,0 +1,75 @@
+# Daily Claude Code bump.
+#
+# Claude Code ships roughly every day (2.1.268 → 2.1.280 over twelve days in
+# September 2026). The weekly flake.lock PR is too slow to follow that, and
+# riding it would mean taking a kernel/mesa bump every time we wanted a CLI
+# release — the two things want very different cadences.
+#
+# The nixpkgs package takes an overridable `manifest` argument and derives both
+# its version and the binary's SHA-256 from it, so this workflow only has to
+# replace a JSON file: there is no hash to recompute and no derivation to edit.
+# The manifest is still a pin, so a bad release is one `nixos-rebuild
+# --rollback` away, exactly like any other input.
+#
+# Mirrors nixpkgs' own pkgs/by-name/cl/claude-code/update.sh, including the
+# `latest` channel it reads (note `stable` is a different, older pointer).
+#
+# Actions are pinned by commit SHA (tags are mutable); Dependabot bumps both the
+# SHA and the trailing version comment via .github/dependabot.yml.
+name: claude-code-bump
+
+on:
+  schedule:
+    - cron: "0 7 * * *" # daily 07:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Fetch the current release manifest
+        id: bump
+        run: |
+          set -euo pipefail
+          base=https://downloads.claude.ai/claude-code-releases
+          old=$(jq -r .version confs/claude-code-manifest.json)
+          new=$(curl -fsSL "$base/latest")
+          curl -fsSL "$base/$new/manifest.zst.json" -o confs/claude-code-manifest.json
+
+          # A manifest that does not describe the version we asked for, or that
+          # is missing the platform we actually build, would fail at eval or —
+          # worse — silently pin something else. Catch it here instead.
+          got=$(jq -r .version confs/claude-code-manifest.json)
+          if [ "$got" != "$new" ]; then
+            echo "::error::manifest reports $got, expected $new"
+            exit 1
+          fi
+          jq -e '.platforms["linux-x64"].checksum' confs/claude-code-manifest.json >/dev/null
+
+          echo "old=$old" >> "$GITHUB_OUTPUT"
+          echo "new=$new" >> "$GITHUB_OUTPUT"
+
+      # No-ops when the manifest is unchanged, so quiet days cost nothing.
+      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          branch: claude-code-bump
+          title: "claude-code: ${{ steps.bump.outputs.old }} -> ${{ steps.bump.outputs.new }}"
+          commit-message: "claude-code: ${{ steps.bump.outputs.old }} -> ${{ steps.bump.outputs.new }}"
+          labels: |
+            dependencies
+            automated
+          body: |
+            Daily bump of `confs/claude-code-manifest.json`.
+
+            `claude-code` ${{ steps.bump.outputs.old }} → ${{ steps.bump.outputs.new }},
+            taken from the `latest` channel that nixpkgs' own update script reads.
+
+            The manifest carries the binary's SHA-256, so this is a complete pin —
+            nothing else needs regenerating. Merging changes nothing on any
+            machine until you pull and `rebuild`.
