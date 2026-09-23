@@ -1,4 +1,10 @@
-{ config, pkgs, lib, osConfig, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  osConfig,
+  ...
+}:
 
 let
   # darkstar's RD320U runs native 4K at niri scale 1.0. Chrome (ozone/wayland)
@@ -23,7 +29,8 @@ in
       "--enable-zero-copy"
       "--disable-background-networking"
       "--disable-backgrounding-occluded-windows"
-    ] ++ lib.optional isDarkstar "--force-device-scale-factor=1.25";
+    ]
+    ++ lib.optional isDarkstar "--force-device-scale-factor=1.25";
   };
 
   programs.firefox = {
@@ -68,7 +75,10 @@ in
       exec = "google-chrome-stable --app=https://mail.superhuman.com";
       icon = "mail-client";
       type = "Application";
-      categories = [ "Network" "Email" ];
+      categories = [
+        "Network"
+        "Email"
+      ];
     };
 
     google-meet = {
@@ -76,7 +86,10 @@ in
       exec = "google-chrome-stable --app=https://meet.google.com";
       icon = "video-display";
       type = "Application";
-      categories = [ "Network" "VideoConference" ];
+      categories = [
+        "Network"
+        "VideoConference"
+      ];
     };
 
     netflix = {
@@ -84,7 +97,10 @@ in
       exec = "google-chrome-stable --app=https://netflix.com";
       icon = "video-display";
       type = "Application";
-      categories = [ "Network" "AudioVideo" ];
+      categories = [
+        "Network"
+        "AudioVideo"
+      ];
     };
 
     display-pilot-2 = {
@@ -92,7 +108,10 @@ in
       exec = "/home/andrew/Applications/DisplayPilot2.AppImage";
       icon = "preferences-desktop-display";
       type = "Application";
-      categories = [ "Settings" "HardwareSettings" ];
+      categories = [
+        "Settings"
+        "HardwareSettings"
+      ];
     };
 
     # Override the package's entry — on niri/Wayland the app only renders
@@ -104,177 +123,235 @@ in
       icon = "proton-mail";
       type = "Application";
       startupNotify = true;
-      categories = [ "Network" "Email" ];
+      categories = [
+        "Network"
+        "Email"
+      ];
       mimeType = [ "x-scheme-handler/mailto" ];
     };
-  } // lib.optionalAttrs isDarkstar {
+  }
+  // lib.optionalAttrs isDarkstar {
     x-plane-12 = {
       name = "X-Plane 12";
       exec = "xplane-run";
       icon = "applications-games";
       type = "Application";
-      categories = [ "Game" "Simulation" ];
+      categories = [
+        "Game"
+        "Simulation"
+      ];
     };
   };
 
   # ── Dev toolchains ──────────────────────────────────
-  home.packages = with pkgs; let
-    render-cli = stdenv.mkDerivation rec {
-      pname = "render-cli";
-      version = "2.14.0";
-      src = fetchzip {
-        url = "https://github.com/render-oss/cli/releases/download/v${version}/cli_${version}_linux_amd64.zip";
-        hash = "sha256-gow0w0ioPG/I2RQwj5RRJQqCDoGSHAzxIaIliBApygw=";
-        stripRoot = false;
+  home.packages =
+    with pkgs;
+    let
+      render-cli = stdenv.mkDerivation rec {
+        pname = "render-cli";
+        version = "2.14.0";
+        src = fetchzip {
+          url = "https://github.com/render-oss/cli/releases/download/v${version}/cli_${version}_linux_amd64.zip";
+          hash = "sha256-gow0w0ioPG/I2RQwj5RRJQqCDoGSHAzxIaIliBApygw=";
+          stripRoot = false;
+        };
+        nativeBuildInputs = [ autoPatchelfHook ];
+        installPhase = ''
+          install -Dm755 cli_v${version} $out/bin/render
+        '';
       };
-      nativeBuildInputs = [ autoPatchelfHook ];
-      installPhase = ''
-        install -Dm755 cli_v${version} $out/bin/render
-      '';
-    };
 
-    # X-Plane 12 ships its own CEF/Chromium and needs a full Linux desktop
-    # runtime. Build a comprehensive FHS env (steam-run's helper closure
-    # turned out to be too thin — only ~13 surface packages).
-    xplane-run = pkgs.buildFHSEnv {
-      name = "xplane-run";
-      targetPkgs = p: with p; [
-        # base
-        bashInteractive coreutils glibc zlib
-        # graphics
-        libGL libglvnd vulkan-loader libgbm mesa libdrm
-        # X11
-        libx11 libxext libxi libxcursor libxrandr
-        libxxf86vm libxinerama libxfixes libxrender
-        libxscrnsaver libxcomposite libxdamage libxtst
-        libxcb libxshmfence libxt libice libsm
-        libxkbcommon
-        # audio
-        alsa-lib libpulseaudio pipewire
-        # CEF / Chromium runtime
-        nss nspr
-        gtk3 glib gobject-introspection
-        pango cairo atk at-spi2-atk at-spi2-core
-        cups dbus expat fontconfig freetype
-        harfbuzz gdk-pixbuf
-        libnotify libsecret libxslt sqlite icu
-        # X-Plane Identity Login uses WebKitGTK 4.1, which needs
-        # glib-networking to provide GIO's TLS backend — without it,
-        # the in-app browser logs "TLS support is not available" and
-        # license activation fails.
-        webkitgtk_4_1 glib-networking
-        # gamemode (libgamemodeauto.so + gamemoderun)
-        gamemode
-        # misc
-        udev libuuid libcap stdenv.cc.cc.lib
-        curl openssl
-      ];
-      runScript = ''
-        bash -c '
-          cd "/home/andrew/Games/X-Plane 12"
-          # GLib was built with its GIO module dir pinned into the Nix store,
-          # so glib-networking (installed inside the FHS at /usr/lib64/gio/modules)
-          # is invisible without an explicit hint. Without it WebKitGTK has no
-          # TLS backend and the login flow reports "TLS support is not available".
-          export GIO_EXTRA_MODULES=/usr/lib64/gio/modules
-          # Force RADV (open-source Mesa Vulkan driver) on AMD
-          export AMD_VULKAN_ICD=RADV
-          # gpl = Graphics Pipeline Library, reduces shader compile stutter
-          export RADV_PERFTEST=gpl
-          # Mesa: cache shaders so cold-start stutter only happens once
-          export MESA_SHADER_CACHE_DIR="$HOME/.cache/mesa_shader_cache"
-          mkdir -p "$MESA_SHADER_CACHE_DIR"
-          exec gamemoderun ./X-Plane-x86_64 "$@"
-        '
-      '';
-    };
-  in [
-    # rust — individual packages instead of rustup to avoid NixOS friction
-    # (managed by nixpkgs unstable, so always near-latest stable)
+      # X-Plane 12 ships its own CEF/Chromium and needs a full Linux desktop
+      # runtime. Build a comprehensive FHS env (steam-run's helper closure
+      # turned out to be too thin — only ~13 surface packages).
+      xplane-run = pkgs.buildFHSEnv {
+        name = "xplane-run";
+        targetPkgs =
+          p: with p; [
+            # base
+            bashInteractive
+            coreutils
+            glibc
+            zlib
+            # graphics
+            libGL
+            libglvnd
+            vulkan-loader
+            libgbm
+            mesa
+            libdrm
+            # X11
+            libx11
+            libxext
+            libxi
+            libxcursor
+            libxrandr
+            libxxf86vm
+            libxinerama
+            libxfixes
+            libxrender
+            libxscrnsaver
+            libxcomposite
+            libxdamage
+            libxtst
+            libxcb
+            libxshmfence
+            libxt
+            libice
+            libsm
+            libxkbcommon
+            # audio
+            alsa-lib
+            libpulseaudio
+            pipewire
+            # CEF / Chromium runtime
+            nss
+            nspr
+            gtk3
+            glib
+            gobject-introspection
+            pango
+            cairo
+            atk
+            at-spi2-atk
+            at-spi2-core
+            cups
+            dbus
+            expat
+            fontconfig
+            freetype
+            harfbuzz
+            gdk-pixbuf
+            libnotify
+            libsecret
+            libxslt
+            sqlite
+            icu
+            # X-Plane Identity Login uses WebKitGTK 4.1, which needs
+            # glib-networking to provide GIO's TLS backend — without it,
+            # the in-app browser logs "TLS support is not available" and
+            # license activation fails.
+            webkitgtk_4_1
+            glib-networking
+            # gamemode (libgamemodeauto.so + gamemoderun)
+            gamemode
+            # misc
+            udev
+            libuuid
+            libcap
+            stdenv.cc.cc.lib
+            curl
+            openssl
+          ];
+        runScript = ''
+          bash -c '
+            cd "/home/andrew/Games/X-Plane 12"
+            # GLib was built with its GIO module dir pinned into the Nix store,
+            # so glib-networking (installed inside the FHS at /usr/lib64/gio/modules)
+            # is invisible without an explicit hint. Without it WebKitGTK has no
+            # TLS backend and the login flow reports "TLS support is not available".
+            export GIO_EXTRA_MODULES=/usr/lib64/gio/modules
+            # Force RADV (open-source Mesa Vulkan driver) on AMD
+            export AMD_VULKAN_ICD=RADV
+            # gpl = Graphics Pipeline Library, reduces shader compile stutter
+            export RADV_PERFTEST=gpl
+            # Mesa: cache shaders so cold-start stutter only happens once
+            export MESA_SHADER_CACHE_DIR="$HOME/.cache/mesa_shader_cache"
+            mkdir -p "$MESA_SHADER_CACHE_DIR"
+            exec gamemoderun ./X-Plane-x86_64 "$@"
+          '
+        '';
+      };
+    in
+    [
+      # rust — individual packages instead of rustup to avoid NixOS friction
+      # (managed by nixpkgs unstable, so always near-latest stable)
 
-    # node + claude code
-    nodejs_22
-    pnpm
+      # node + claude code
+      nodejs_22
+      pnpm
 
-    # databases
-    postgresql  # psql client
-    tableplus   # GUI database client
+      # databases
+      postgresql # psql client
+      tableplus # GUI database client
 
-    # general dev
-    just        # command runner (modern make)
-    dive        # docker image explorer
-    csvlens     # CSV viewer TUI
-    pandoc      # document converter
-    (texliveSmall.withPackages (ps: with ps; [
-      collection-fontsrecommended
-      collection-latexrecommended
-      collection-mathscience
-    ]))
+      # general dev
+      just # command runner (modern make)
+      dive # docker image explorer
+      csvlens # CSV viewer TUI
+      pandoc # document converter
+      (texliveSmall.withPackages (
+        ps: with ps; [
+          collection-fontsrecommended
+          collection-latexrecommended
+          collection-mathscience
+        ]
+      ))
 
-    # cloud / deploy
-    render-cli      # Render.com CLI
+      # cloud / deploy
+      render-cli # Render.com CLI
 
-    # networking / ops
-    tailscale
-    trayscale       # Tailscale GUI
-    ngrok           # tunnel local servers for demos
-    openssl
-    ssh-copy-id
-    rsync
+      # networking / ops
+      tailscale
+      trayscale # Tailscale GUI
+      ngrok # tunnel local servers for demos
+      openssl
+      ssh-copy-id
+      rsync
 
-    # media
-    mpv         # video
-    imv         # image viewer for wayland
-    zathura     # pdf viewer
-    xournalpp   # pdf annotation and signatures
+      # media
+      mpv # video
+      imv # image viewer for wayland
+      zathura # pdf viewer
+      xournalpp # pdf annotation and signatures
 
-    # gui apps
-    graphite               # vector graphics editor
-    system-config-printer  # printer management
-    nautilus    # file manager
-    zed-editor
-    warp-terminal
-    teams-for-linux
-    zoom-us
-    protonmail-desktop
-    bitwarden-desktop
-    bitwarden-cli
-    morgen          # calendar app
-    obsidian
-    basalt          # Obsidian notes TUI
-    organicmaps
-    spotify
-    slack
-    libreoffice
-    prusa-slicer
-    inkscape
-    gimp
+      # gui apps
+      graphite # vector graphics editor
+      system-config-printer # printer management
+      nautilus # file manager
+      zed-editor
+      warp-terminal
+      teams-for-linux
+      zoom-us
+      protonmail-desktop
+      bitwarden-desktop
+      bitwarden-cli
+      morgen # calendar app
+      obsidian
+      basalt # Obsidian notes TUI
+      organicmaps
+      spotify
+      slack
+      libreoffice
+      prusa-slicer
+      inkscape
+      gimp
 
-    # terminal launcher for Nautilus "Open With"
-    xdg-terminal-exec
+      # terminal launcher for Nautilus "Open With"
+      xdg-terminal-exec
 
-    # recording
-    obs-studio
+      # recording
+      obs-studio
 
-    # local CLIs (symlinked from source builds)
-    (pkgs.runCommand "os-cli" {} ''
-      mkdir -p $out/bin
-      ln -s /home/andrew/code/agema_os/os-cli/target/release/os $out/bin/os
-    '')
+      # local CLIs (symlinked from source builds)
+      (pkgs.runCommand "os-cli" { } ''
+        mkdir -p $out/bin
+        ln -s /home/andrew/code/agema_os/os-cli/target/release/os $out/bin/os
+      '')
 
-    # fun hacker vibes
-    cmatrix         # Matrix rain
-    hollywood       # multi-pane hacker dashboard
-    cbonsai         # terminal bonsai tree
-    pipes-rs        # animated pipes screensaver
-    genact          # fake activity generator
-    fastfetch       # system info with ASCII art
-    nms             # Sneakers movie decryption effect
-    cool-retro-term # CRT terminal emulator
-  ]
-  # gaming — darkstar only; p14s stays lean
-  ++ lib.optionals isDarkstar [
-    steam-run   # FHS env for running non-Nix binaries (X-Plane installer, etc.)
-    xplane-run
-  ];
+      # fun hacker vibes
+      cmatrix # Matrix rain
+      hollywood # multi-pane hacker dashboard
+      cbonsai # terminal bonsai tree
+      pipes-rs # animated pipes screensaver
+      genact # fake activity generator
+      fastfetch # system info with ASCII art
+      nms # Sneakers movie decryption effect
+      cool-retro-term # CRT terminal emulator
+    ]
+    # gaming — darkstar only; p14s stays lean
+    ++ lib.optionals isDarkstar [
+      steam-run # FHS env for running non-Nix binaries (X-Plane installer, etc.)
+      xplane-run
+    ];
 }
