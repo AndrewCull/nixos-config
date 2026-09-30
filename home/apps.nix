@@ -300,6 +300,7 @@ in
 
       # cloud / deploy
       render-cli # Render.com CLI
+      wrangler # Cloudflare Workers/Pages/R2 CLI
 
       # networking / ops
       tailscale
@@ -308,6 +309,7 @@ in
       openssl
       ssh-copy-id
       rsync
+      rclone # sync to/from cloud storage (R2, S3, Drive, ...)
 
       # media
       mpv # video

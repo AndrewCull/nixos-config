@@ -55,6 +55,7 @@ Currently configured for two hosts — **p14s** (ThinkPad P14s Gen 6, AMD) and *
 | HTTP | httpie |
 | Secrets | sops (edit `secrets.yaml`), age (keygen/encryption) |
 | Payments | stripe-cli (`stripe`) |
+| Cloud CLIs | render-cli (`render`), wrangler (Cloudflare Workers/Pages/R2), rclone (cloud storage sync) |
 | AI agents | herdr (agent multiplexer TUI, via flake input pinned to a release tag) |
 | Formatting | prettierd |
 
