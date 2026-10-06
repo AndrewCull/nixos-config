@@ -71,12 +71,13 @@ Currently configured for two hosts — **p14s** (ThinkPad P14s Gen 6, AMD) and *
 | Office | LibreOffice |
 | PDF | zathura (viewer), xournalpp (annotation) |
 | Video | mpv, OBS Studio |
-| Images | imv |
+| Images | imv, darktable (RAW viewer / developer), Nautilus RAW thumbnails (`raw-thumbnailer`: embedded JPEG preview via exiftool, auto-oriented — glycin in nixpkgs ships no RAW loader) |
 | Music | Spotify, cava (terminal audio visualizer) |
 | Passwords | Bitwarden |
 | Graphics | Graphite (vector editor), Inkscape (vector editor), GIMP (raster editor) |
 | Code | Zed, Warp Terminal |
 | Gaming | darkstar only: Steam + Gamescope + GameMode, X-Plane 12 (via custom `xplane-run` FHS env), `steam-run`. Removed from p14s to reclaim disk space. |
+| Default apps | `xdg.mimeApps` owns `~/.config/mimeapps.list` (in-app "set as default" won't stick — edit `home/apps.nix`). Chrome for web/mailto; Helix for `.txt`/`.md` from Nautilus, opened in Ghostty via `xdg-terminal-exec` (pinned with `xdg.terminal-exec` so it never picks Warp or cool-retro-term) |
 
 ## System Services
 

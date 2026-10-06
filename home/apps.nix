@@ -13,6 +13,61 @@ let
   # physical size it had at the old scale 1.25. Other hosts use real fractional
   # scaling, so Chrome already gets the right scale from Wayland — don't force.
   isDarkstar = osConfig.networking.hostName == "darkstar";
+
+  # Nautilus thumbnails images through glycin, and nixpkgs builds it without
+  # the (experimental) RAW loader. Rather than rebuild glycin-loaders and
+  # everything that links it, pull the camera's embedded JPEG preview out with
+  # exiftool — fast, and it matches what the camera showed on its screen.
+  # The preview carries no orientation of its own, so apply the RAW's.
+  raw-thumbnailer = pkgs.writeShellApplication {
+    name = "raw-thumbnailer";
+    runtimeInputs = with pkgs; [
+      exiftool
+      imagemagick
+    ];
+    text = ''
+      in="$1" out="$2" size="$3"
+      # Largest embedded image first; tag names vary by maker.
+      for tag in JpgFromRaw PreviewImage OtherImage ThumbnailImage; do
+        if exiftool -b -"$tag" "$in" > "$out.jpg" 2>/dev/null && [ -s "$out.jpg" ]; then
+          break
+        fi
+      done
+      [ -s "$out.jpg" ] || { rm -f "$out.jpg"; exit 1; }
+      case "$(exiftool -n -s3 -Orientation "$in")" in
+        2) orient=TopRight ;; 3) orient=BottomRight ;; 4) orient=BottomLeft ;;
+        5) orient=LeftTop ;; 6) orient=RightTop ;; 7) orient=RightBottom ;;
+        8) orient=LeftBottom ;; *) orient=TopLeft ;;
+      esac
+      magick "$out.jpg" -orient "$orient" -auto-orient -thumbnail "''${size}x''${size}" "png:$out"
+      rm -f "$out.jpg"
+    '';
+  };
+
+  rawMimeTypes = [
+    "image/x-dcraw"
+    "image/x-adobe-dng"
+    "image/x-canon-cr2"
+    "image/x-canon-cr3"
+    "image/x-canon-crw"
+    "image/x-fuji-raf"
+    "image/x-kodak-dcr"
+    "image/x-kodak-k25"
+    "image/x-kodak-kdc"
+    "image/x-minolta-mrw"
+    "image/x-nikon-nef"
+    "image/x-nikon-nrw"
+    "image/x-olympus-orf"
+    "image/x-panasonic-raw"
+    "image/x-panasonic-raw2"
+    "image/x-panasonic-rw"
+    "image/x-panasonic-rw2"
+    "image/x-pentax-pef"
+    "image/x-sigma-x3f"
+    "image/x-sony-arw"
+    "image/x-sony-sr2"
+    "image/x-sony-srf"
+  ];
 in
 {
   # ── Browser ─────────────────────────────────────────
@@ -59,6 +114,50 @@ in
     };
   };
   stylix.targets.firefox.profileNames = [ "default" ];
+
+  # ── Default applications ────────────────────────────
+  # Home-manager owns ~/.config/mimeapps.list, so "set as default" from inside
+  # an app won't stick — add the association here instead.
+  xdg.mimeApps = {
+    enable = true;
+    defaultApplications = {
+      "text/html" = "google-chrome.desktop";
+      "x-scheme-handler/http" = "google-chrome.desktop";
+      "x-scheme-handler/https" = "google-chrome.desktop";
+      "x-scheme-handler/about" = "google-chrome.desktop";
+      "x-scheme-handler/unknown" = "google-chrome.desktop";
+      "x-scheme-handler/mailto" = "google-chrome.desktop";
+      "x-scheme-handler/claude-cli" = "claude-code-url-handler.desktop";
+      "x-scheme-handler/slack" = "slack.desktop";
+      "x-scheme-handler/bitwarden" = "bitwarden.desktop";
+
+      # Helix is a terminal app (Terminal=true); GIO hands it to
+      # xdg-terminal-exec, which opens it in Ghostty (below).
+      "text/plain" = "Helix.desktop";
+      "text/markdown" = "Helix.desktop";
+      "text/x-markdown" = "Helix.desktop";
+    };
+    # Helix.desktop doesn't declare markdown, so list it under "Open With" too.
+    associations.added = {
+      "text/markdown" = "Helix.desktop";
+      "text/x-markdown" = "Helix.desktop";
+    };
+  };
+
+  # Terminal for Terminal=true apps launched from Nautilus / "Open With".
+  # Pinned, or xdg-terminal-exec may pick Warp or cool-retro-term.
+  xdg.terminal-exec = {
+    enable = true;
+    settings.default = [ "com.mitchellh.ghostty.desktop" ];
+  };
+
+  # ── RAW thumbnails in Nautilus ──────────────────────
+  xdg.dataFile."thumbnailers/raw.thumbnailer".text = ''
+    [Thumbnailer Entry]
+    TryExec=${lib.getExe raw-thumbnailer}
+    Exec=${lib.getExe raw-thumbnailer} %i %o %s
+    MimeType=${lib.concatStringsSep ";" rawMimeTypes};
+  '';
 
   # ── Web App PWAs ────────────────────────────────────
   xdg.desktopEntries = {
@@ -338,9 +437,7 @@ in
       prusa-slicer
       inkscape
       gimp
-
-      # terminal launcher for Nautilus "Open With"
-      xdg-terminal-exec
+      darktable # RAW photo viewer / developer
 
       # recording
       obs-studio
