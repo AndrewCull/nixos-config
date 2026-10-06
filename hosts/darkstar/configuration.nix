@@ -22,7 +22,25 @@
 
   # ── CPU (Ryzen 9000 / Granite Ridge) ──────────────────
   hardware.cpu.amd.updateMicrocode = true;
-  boot.kernelParams = [ "amd_pstate=active" ];
+  boot.kernelParams = [
+    "amd_pstate=active"
+    # With a crash kernel loaded, panic() kexecs *before* kmsg_dump, so
+    # efi_pstore never sees the panic and an empty /sys/fs/pstore stops
+    # meaning "silent lockup" (2026-10-05: six unclean boots, pstore empty
+    # every time). Run the dump notifiers first, then kexec.
+    "crash_kexec_post_notifiers"
+    # WCN7850 (ath12k, 0c:00.0) fell off the PCIe bus after the 09-24 and
+    # 10-04 crashes — absent on the next warm boot, only a power cycle / CMOS
+    # reset brought it back. Its link ran with L1 ASPM enabled. Disable ASPM
+    # system-wide at enumeration: a per-device sysfs write can race ath12k,
+    # which saves LNKCTL before firmware boot and restores it afterwards.
+    "pcie_aspm.policy=performance"
+  ];
+
+  # ── WiFi (WCN7850 / ath12k) ───────────────────────────
+  # Same 2026-10-05 investigation: 802.11 power save was on. Desktop on mains,
+  # nothing to gain from it; one less firmware sleep/wake path to go wrong.
+  networking.networkmanager.wifi.powersave = false;
 
   # ── Hang forensics ────────────────────────────────────
   # 2026-08-11: silent hard lockup at 07:11:56 after 6 days uptime. The journal
@@ -56,6 +74,27 @@
   # the watchdog above stand on their own.
   boot.crashDump.enable = true;
   boot.crashDump.reservedMemory = "512M";
+
+  # The crashDump module boots the crash kernel into rescue mode and stops
+  # there — nothing saves /proc/vmcore, and on the 9070 XT the VGA console is
+  # black, so the box sat "dead" for 94 min / 25 h until a manual reset
+  # (2026-09-22 → 10-05). Inside the crash kernel only (/proc/vmcore exists),
+  # save the crashed kernel's log and reboot. dmesg only: a full 91 GiB core
+  # from a maxcpus=1 kernel would take ages, and makedumpfile isn't packaged.
+  systemd.services.kdump-save = {
+    description = "Save crashed kernel's dmesg from /proc/vmcore and reboot";
+    wantedBy = [ "rescue.target" "multi-user.target" ];
+    after = [ "local-fs.target" ];
+    unitConfig.ConditionPathExists = "/proc/vmcore";
+    serviceConfig.Type = "oneshot";
+    script = ''
+      mkdir -p /var/crash
+      ts=$(date +%Y%m%d-%H%M%S)
+      ${pkgs.kexec-tools}/bin/vmcore-dmesg /proc/vmcore > /var/crash/dmesg-$ts.txt || true
+      sync
+      systemctl reboot --force
+    '';
+  };
 
   # One-keystroke memtest from the boot menu. Worth having, but note it will
   # NOT reproduce an idle-hours AM5 lockup — only uptime tests that.
