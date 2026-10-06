@@ -83,6 +83,7 @@ Currently configured for two hosts — **p14s** (ThinkPad P14s Gen 6, AMD) and *
 | Service | Purpose |
 |---------|---------|
 | Tailscale + Trayscale | Mesh networking (work tailnet incl. Render) + GUI control. Configured as exit-node client (`useRoutingFeatures = "client"`) so Mullvad add-on or self-hosted exit nodes route general internet traffic while tailnet peers stay reachable. Tailscale SSH enabled (`--ssh --operator=andrew`): SSH between tailnet peers is ACL-authed, no key management. |
+| Remote desktop (darkstar) | `wayvnc` runs on darkstar as a systemd user service tied to the niri session, serving the live desktop on a unix socket (`$XDG_RUNTIME_DIR/wayvnc.sock`) — no TCP port, no VNC password; the only way in is SSH as andrew (Tailscale SSH). From any other host run `darkstar-desktop`: it forwards the socket over SSH to `127.0.0.1:5901`, wakes darkstar's monitors, and opens the `wlvncc` viewer. Quitting the viewer closes the tunnel. If darkstar is locked you get hyprlock and type the password through the viewer. |
 | ngrok | Tunnel local servers for demos |
 | PipeWire | Audio (with PulseAudio compat). `pavucontrol` (per-app routing GUI, also waybar volume right-click) and `pactl` (from the `pulseaudio` client tools) are on PATH. |
 | Sink switching | `audio-mode` (`Mod+P` / `Mod+Shift+P`) is the fast path and behaves identically on both hosts: headphones → the connected Bluetooth device, speaker → the built-in ALC257 on p14s and the powered speakers on the rear line-out on darkstar (both reached by the same "first non-HDMI alsa sink" fallback). `sink-picker` (`Mod+O`, or left-click the waybar volume) is the general one — a rofi list of every sink, which is how you reach the BenQ's HDMI audio on darkstar. It sets the default *and* runs `pactl move-sink-input` over live streams; that move matters, since `set-default` only affects streams that start *later*, so switching output while audio plays otherwise looks like it did nothing. |
@@ -130,6 +131,7 @@ home/
   dev.nix                       # CLI dev tools (sets CLAUDE_CODE_DISABLE_MOUSE=1 — Claude Code's mouse tracking conflicts with zellij, causing click-to-paste)
   git.nix                       # Git config
   ghostty.nix                   # Terminal emulator
+  remote-desktop.nix            # wayvnc server on darkstar (unix socket) + `darkstar-desktop` viewer command elsewhere
   ssh.nix                       # SSH client config
   starship.nix                  # Prompt
   theme.nix                     # Stylix overrides, icons, cursor
