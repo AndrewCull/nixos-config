@@ -317,6 +317,7 @@ All keybindings use `Mod` (Super/Windows key). Press `Mod+Shift+/` to open the k
 | `Mod+Ctrl+V` | 📋 Clipboard history — rofi list of past selections, text or image (`clip-picker`) |
 | `Mod+P` | 🎧 Headphone audio mode — stops EasyEffects and routes everything to the connected Bluetooth device |
 | `Mod+Shift+P` | 🔊 Speaker audio mode — default sink → built-in speaker (p14s) or line-out desk speakers (darkstar); starts EasyEffects on p14s |
+| `XF86AudioMicMute` (HHKB `Right Alt+F`) | 🎙 Mic mute toggle — flips the default source, then syncs every capture node (`pw-dump` by `media.class`, so the EasyEffects virtual source that Chrome/Zoom record through is included; the old `wpctl status` scrape missed it once WirePlumber 0.5.17 moved it under Filters, leaving the mic stuck muted) and the ThinkPad mic LED (`mic-mute-toggle`) |
 | `Mod+O` | 󰕾 Output picker — rofi list of every sink; sets the default **and** moves already-playing streams to it (`sink-picker`) |
 | `Print` | Screenshot |
 | `Mod+Shift+E` | Quit niri |

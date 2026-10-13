@@ -131,11 +131,16 @@ let
     ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
     muted=$(${pkgs.wireplumber}/bin/wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | ${pkgs.gnugrep}/bin/grep -c MUTED)
 
-    # Sync all other sources to match
-    ${pkgs.wireplumber}/bin/wpctl status | ${pkgs.gawk}/bin/awk '
-      /Sources:/ { s=1; next }
-      s && /Filters:|Streams:|^$/ { exit }
-      s { match($0, /[0-9]+\./); if (RSTART) print substr($0, RSTART, RLENGTH-1) }
+    # Sync every other capture node to match. Enumerate by media.class rather
+    # than scraping the "Sources:" section of `wpctl status`: since EasyEffects
+    # 8.2.9 / WirePlumber 0.5.17 (2026-10) the easyeffects_source virtual node
+    # carries a node.link-group and is listed under "Filters:", so the old
+    # section scrape skipped it. Chrome/Zoom/Slack record *through* that node,
+    # and WirePlumber persists its mute, so it stayed muted across reboots while
+    # the key only flipped the hardware mics. Audio/Source/Virtual covers it.
+    ${pkgs.pipewire}/bin/pw-dump | ${pkgs.jq}/bin/jq -r '
+      .[] | select(.info.props["media.class"] // "" | startswith("Audio/Source"))
+          | .id
     ' | while read -r id; do
       ${pkgs.wireplumber}/bin/wpctl set-mute "$id" "$muted"
     done
