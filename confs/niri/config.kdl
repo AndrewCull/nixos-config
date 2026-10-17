@@ -103,6 +103,14 @@ window-rule {
     default-column-width { proportion 0.5; }
 }
 
+// `sticky edit` — the notes file in hx, as a small floating window.
+window-rule {
+    match app-id=r#"^sticky\.notes$"#
+    open-floating true
+    default-column-width { fixed 900; }
+    default-window-height { fixed 600; }
+}
+
 cursor {
     hide-when-typing
     hide-after-inactive-ms 10000
@@ -138,6 +146,10 @@ binds {
     // ── Notifications ─────────────────────────────────
     Mod+N       { spawn "makoctl" "dismiss"; }
     Mod+Shift+N { spawn "makoctl" "dismiss" "--all"; }
+
+    // ── Sticky notes ────────────────────────────────
+    Mod+S       { spawn "sticky" "add"; }
+    Mod+Shift+S { spawn "sticky" "pick"; }
 
     // ── Clipboard ───────────────────────────────────
     // Not Mod+Alt+V: modules/mxkeys.nix remaps the MX Keys' left Alt to Super,

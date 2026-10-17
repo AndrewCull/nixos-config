@@ -318,6 +318,106 @@ let
     esac
   '';
 
+  # ── Sticky notes ───────────────────────────────────────
+  # One note per line in ~/notes/sticky.txt, surfaced in waybar (count + full
+  # list in the tooltip) since niri has no always-on-top / all-workspace
+  # windows for a real sticky-note app to live in.
+  #   sticky add [text]  rofi prompt (or the given text) → append a note
+  #   sticky pick        rofi list: Enter opens the file in hx on that note;
+  #                      Shift+Delete marks it done
+  #   sticky edit [line] the whole file in hx, floating (window rule in config.kdl)
+  #   sticky waybar      JSON for the custom/sticky module
+  # Every change pokes waybar with SIGRTMIN+8 so the count updates instantly.
+  sticky = pkgs.writeShellScriptBin "sticky" ''
+    set -eu
+    ROFI=${pkgs.rofi}/bin/rofi
+    JQ=${pkgs.jq}/bin/jq
+    NOTIFY=${pkgs.libnotify}/bin/notify-send
+    file="$HOME/notes/sticky.txt"
+    mkdir -p "$(dirname "$file")"
+    touch "$file"
+
+    # Signal waybar's main PID via systemd: the process is named
+    # ".waybar-wrapped", so `pkill -x waybar` never matches it.
+    refresh() { ${pkgs.systemd}/bin/systemctl --user kill --kill-whom=main --signal=SIGRTMIN+8 waybar.service 2>/dev/null || true; }
+    notes() { ${pkgs.gnugrep}/bin/grep '[^[:space:]]' "$file" || true; }
+
+    case "''${1:-}" in
+      add)
+        shift
+        if [ $# -gt 0 ]; then
+          note="$*"
+        else
+          note=$(printf "" | $ROFI -dmenu -p "󰎞 Note" -theme-str 'window { width: 40%; } listview { lines: 0; }') || exit 0
+        fi
+        note=$(printf '%s' "$note" | ${pkgs.coreutils}/bin/tr -d '\n' | ${pkgs.gnused}/bin/sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        [ -z "$note" ] && exit 0
+        # Make sure the previous last line is newline-terminated (hx may not).
+        [ -s "$file" ] && [ "$(${pkgs.coreutils}/bin/tail -c1 "$file")" != "" ] && echo >> "$file"
+        printf '%s\n' "$note" >> "$file"
+        refresh
+        ;;
+
+      pick)
+        list=$(notes)
+        if [ -z "$list" ]; then
+          $NOTIFY "󰎞 Sticky" "No notes — Mod+S to add one"
+          exit 0
+        fi
+        rc=0
+        idx=$(printf '%s\n' "$list" | $ROFI -dmenu -i -no-custom -format i -p "󰎞 Notes" \
+          -mesg "Enter: edit    Shift+Del: done" \
+          -kb-delete-entry "" -kb-custom-1 "Shift+Delete" \
+          -theme-str 'window { width: 50%; }') || rc=$?
+        [ -z "$idx" ] && exit 0
+        line=$(printf '%s\n' "$list" | ${pkgs.gnused}/bin/sed -n "$((idx + 1))p")
+        case "$rc" in
+          0)
+            # rofi's index skips blank lines; map it back to the file's line.
+            lineno=$(${pkgs.gnugrep}/bin/grep -n '[^[:space:]]' "$file" \
+              | ${pkgs.gnused}/bin/sed -n "$((idx + 1))s/:.*//p")
+            exec "$0" edit "''${lineno:-1}"
+            ;;
+          10)
+            # Rewrite without the chosen line (blank lines are dropped too).
+            printf '%s\n' "$list" | ${pkgs.gnused}/bin/sed "$((idx + 1))d" > "$file.tmp"
+            mv "$file.tmp" "$file"
+            $NOTIFY "󰄬 Done" "$line"
+            refresh
+            ;;
+        esac
+        ;;
+
+      edit)
+        # Hand the launch to niri (like a keybind spawn) rather than running
+        # ghostty as a child of whoever called us — from waybar's right-click
+        # the window never appeared.
+        ${osConfig.programs.niri.package}/bin/niri msg action spawn -- \
+          ${pkgs.ghostty}/bin/ghostty --class=sticky.notes --title="Sticky notes" -e "$0" _hx "''${2:-1}"
+        ;;
+
+      _hx)
+        hx "$file:''${2:-1}"
+        refresh
+        ;;
+
+      waybar)
+        n=$(notes | ${pkgs.coreutils}/bin/wc -l)
+        if [ "$n" -eq 0 ]; then
+          $JQ -cn '{text: "<span size=\"large\">󰎞</span>", tooltip: "No notes — Mod+S to add one", class: "empty"}'
+        else
+          tip=$(notes | ${pkgs.gnused}/bin/sed 's/&/\&amp;/g;s/</\&lt;/g;s/>/\&gt;/g;s/^/• /')
+          $JQ -cn --arg n "$n" --arg t "$tip" '{text: "<span size=\"large\">󰎞</span> \($n)", tooltip: $t, class: "has-notes"}'
+        fi
+        ;;
+
+      *)
+        echo "usage: sticky <add [text]|pick|edit [line]|waybar>" >&2
+        exit 2
+        ;;
+    esac
+  '';
+
   wallpaper-next = pkgs.writeShellScriptBin "wallpaper-next" ''
     dir="$HOME/wallpapers"
     state="$HOME/.config/current-wallpaper"
@@ -398,6 +498,7 @@ in
     audio-mode
     sink-picker
     clip-picker
+    sticky
 
     # Audio GUIs / CLI. pavucontrol for per-app routing; pulseaudio here is just
     # the client tools (pactl) — the pipewire-pulse daemon provides the server.
@@ -437,6 +538,7 @@ in
       #workspaces button.active {
         border-radius: 0;
       }
+      #custom-sticky,
       #custom-tailscale,
       #memory,
       #network,
@@ -452,6 +554,9 @@ in
         border: 1px solid #${base03};
         border-radius: 0;
       }
+      #custom-sticky.empty {
+        color: #${base03};
+      }
     '';
     settings = {
       mainBar = {
@@ -463,6 +568,7 @@ in
         # darkstar is a desktop with no battery; waybar's battery module
         # segfaults in its refresh worker on a battery-less machine, so omit it.
         modules-right = [
+          "custom/sticky"
           "custom/tailscale"
           "memory"
           "network"
@@ -503,6 +609,19 @@ in
           format-muted = "<span size='large'>󰝟</span>";
           on-click = "${sink-picker}/bin/sink-picker";
           on-click-right = "${pkgs.pavucontrol}/bin/pavucontrol";
+        };
+
+        # Sticky notes (see the sticky script above). signal 8 = instant refresh
+        # after add/done/edit; the interval catches edits made elsewhere.
+        "custom/sticky" = {
+          format = "{}";
+          return-type = "json";
+          exec = "${sticky}/bin/sticky waybar";
+          interval = 30;
+          signal = 8;
+          on-click = "${sticky}/bin/sticky pick";
+          on-click-middle = "${sticky}/bin/sticky add";
+          on-click-right = "${sticky}/bin/sticky edit";
         };
 
         "custom/tailscale" = {
