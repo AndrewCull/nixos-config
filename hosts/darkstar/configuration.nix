@@ -126,12 +126,15 @@
      ID_INPUT_ACCELEROMETER=0
      ID_INPUT_JOYSTICK=1
   '';
-  # Honeycomb (Foxtrot stick, Throttle Box) hidraw nodes are root-only by
-  # default; give the seat user access for plugins that talk HID directly.
-  services.udev.extraRules = ''
-    KERNEL=="hidraw*", ATTRS{idVendor}=="294b", TAG+="uaccess"
-    KERNEL=="hidraw*", ATTRS{idVendor}=="0f0d", ATTRS{idProduct}=="ffbe", TAG+="uaccess"
-  '';
+  # Honeycomb (Foxtrot take-off kit) hidraw nodes are root-only by default;
+  # give the seat user access for plugins that talk HID directly. Must sort
+  # before 73-seat-late.rules, which turns the uaccess tag into an ACL —
+  # extraRules lands in 99-local.rules, too late to take effect.
+  services.udev.packages = [
+    (pkgs.writeTextDir "lib/udev/rules.d/70-honeycomb.rules" ''
+      KERNEL=="hidraw*", ATTRS{idVendor}=="294b", TAG+="uaccess"
+    '')
+  ];
 
   # mesa-demos → glxinfo (OpenGL renderer/version), vulkan-tools → vulkaninfo,
   # libva-utils → vainfo (confirm VA-API decode is live on the dGPU, not a
