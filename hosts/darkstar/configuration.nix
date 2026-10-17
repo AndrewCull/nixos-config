@@ -117,6 +117,22 @@
   };
   programs.gamemode.enable = true;
 
+  # ── Flight sim controls (X-Plane) ─────────────────────
+  # Thrustmaster TPR pedals report only X/Y/Z axes and no buttons, so udev's
+  # input_id heuristic tags them ID_INPUT_ACCELEROMETER instead of a joystick:
+  # no uaccess ACL, and SDL/X-Plane skip them. Force the joystick class (2026-10).
+  services.udev.extraHwdb = ''
+    id-input:modalias:input:b0003v044FpB68F*
+     ID_INPUT_ACCELEROMETER=0
+     ID_INPUT_JOYSTICK=1
+  '';
+  # Honeycomb (Foxtrot stick, Throttle Box) hidraw nodes are root-only by
+  # default; give the seat user access for plugins that talk HID directly.
+  services.udev.extraRules = ''
+    KERNEL=="hidraw*", ATTRS{idVendor}=="294b", TAG+="uaccess"
+    KERNEL=="hidraw*", ATTRS{idVendor}=="0f0d", ATTRS{idProduct}=="ffbe", TAG+="uaccess"
+  '';
+
   # mesa-demos → glxinfo (OpenGL renderer/version), vulkan-tools → vulkaninfo,
   # libva-utils → vainfo (confirm VA-API decode is live on the dGPU, not a
   # silent software-decode fallback).
