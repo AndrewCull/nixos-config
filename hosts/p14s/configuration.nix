@@ -94,6 +94,13 @@
     HibernateDelaySec = 120;
   };
 
+  # ── WiFi (MT7925 / mt7925e) ───────────────────────────
+  # 2026-10-19: after resume-fix reloads mt7925e the interface came back with
+  # 802.11 power save on, even on AC. Laptop, but almost always docked; one
+  # less firmware sleep/wake path, matching darkstar. NM applies this on every
+  # activation, so it survives the post-resume driver reload.
+  networking.networkmanager.wifi.powersave = false;
+
   # Unload the MT7925 WiFi driver before any sleep. Letting it hibernate with
   # a live association leaves stale entries on the mt76 wcid poll list; the
   # next AP roam then re-adds a freed wcid and panics the kernel
