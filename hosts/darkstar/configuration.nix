@@ -156,6 +156,21 @@
     fi
   '';
 
+  # -- Code on the data drive --
+  # ~/code (1.1T of repos, node_modules and cargo targets) filled the root NVMe
+  # to 100% on 2026-10-20. It lives on the second drive (/data, nvme1n1) and is
+  # bind-mounted back to its old path, so every absolute path still works: git
+  # worktree links, per-project Claude memory keyed by path, scripts. `depends`
+  # orders it after /data; without /data the boot stops rather than silently
+  # mounting an empty ~/code on the root drive.
+  systemd.tmpfiles.rules = [ "d /data/code 0755 andrew users -" ];
+  fileSystems."/home/andrew/code" = {
+    device = "/data/code";
+    fsType = "none";
+    options = [ "bind" ];
+    depends = [ "/data" ];
+  };
+
   # -- Secrets --
   sops.defaultSopsFile = ../../secrets/secrets.yaml;
   sops.age.keyFile = "/var/lib/sops-nix/key.txt";
