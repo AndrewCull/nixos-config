@@ -248,10 +248,10 @@ in
     let
       render-cli = stdenv.mkDerivation rec {
         pname = "render-cli";
-        version = "2.14.0";
+        version = "2.29.0";
         src = fetchzip {
           url = "https://github.com/render-oss/cli/releases/download/v${version}/cli_${version}_linux_amd64.zip";
-          hash = "sha256-gow0w0ioPG/I2RQwj5RRJQqCDoGSHAzxIaIliBApygw=";
+          hash = "sha256-Cm5akV7p/OAOqKceT+nPkR3zguf/8U6ky899mRI6LCU=";
           stripRoot = false;
         };
         nativeBuildInputs = [ autoPatchelfHook ];
