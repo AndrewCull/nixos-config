@@ -57,6 +57,7 @@ Currently configured for two hosts — **p14s** (ThinkPad P14s Gen 6, AMD) and *
 | Payments | stripe-cli (`stripe`) |
 | Cloud CLIs | render-cli (`render`), wrangler (Cloudflare Workers/Pages/R2), rclone (cloud storage sync) |
 | AI agents | herdr (agent multiplexer TUI, via flake input pinned to a release tag) |
+| Agent workflows | fabro (fabro.sh factory CLI — static musl nightly v0.400.0-nightly.0 fetched in `home/dev.nix`; pin matches `~/code/fabro-factory/VERSION`, bump version + hash together by hand) |
 | Formatting | prettierd |
 
 ## Applications

@@ -5,6 +5,24 @@
   ...
 }:
 
+let
+  # fabro — agent workflow factory CLI (not in nixpkgs). Pinned to the release in
+  # ~/code/fabro-factory/VERSION; bump both together. Uses the static musl build:
+  # the gnu build expects an FHS glibc that NixOS doesn't have.
+  # A NIGHTLY since 2026-10-29: docs.fabro.sh tracks the nightlies, and v0.254 stable
+  # lacked on_failure, `run --target` and the current Claude models.
+  fabro = pkgs.stdenvNoCC.mkDerivation rec {
+    pname = "fabro";
+    version = "0.400.0-nightly.0";
+    src = pkgs.fetchurl {
+      url = "https://github.com/fabro-sh/fabro/releases/download/v${version}/fabro-x86_64-unknown-linux-musl.tar.gz";
+      hash = "sha256-pH4SUsvNqh1ts8PXyu2eiywC8LPQjfT/8KZILRXeYDE=";
+    };
+    installPhase = ''
+      install -Dm755 fabro $out/bin/fabro
+    '';
+  };
+in
 {
   # ── CLI tools with home-manager integration ─────────
   programs.bat.enable = true;
@@ -90,6 +108,7 @@
     python3 # bare interpreter on PATH; uv manages project envs, tools still shell out to python3
     stripe-cli # stripe payments CLI (provides `stripe`)
     inputs.herdr.packages.${pkgs.system}.default # agent multiplexer TUI
+    fabro # agent workflow factory CLI (fabro.sh), pinned musl release
 
     # yazi preview dependencies
     poppler-utils # PDF thumbnails
