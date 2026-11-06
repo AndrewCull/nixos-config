@@ -96,6 +96,23 @@
     '';
   };
 
+  # 2026-11-06 lockup: nothing recorded what the DRAM was running at, so we
+  # couldn't tell a failed 5200 MT/s test from a BIOS that had fallen back to
+  # the kit's 5600 JEDEC default (turning EXPO off resets a manual frequency
+  # to Auto). Log the configured speed and BIOS version every boot so
+  # `journalctl -u log-dram-speed -b -1` answers it for any past boot.
+  systemd.services.log-dram-speed = {
+    description = "Log configured DRAM speed and BIOS version";
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig.Type = "oneshot";
+    script = ''
+      ${pkgs.dmidecode}/bin/dmidecode -s bios-version | sed 's/^/BIOS version: /'
+      ${pkgs.dmidecode}/bin/dmidecode -s bios-release-date | sed 's/^/BIOS date: /'
+      ${pkgs.dmidecode}/bin/dmidecode -t 17 \
+        | grep -E 'Configured Memory Speed|Configured Memory Voltage' | sort | uniq -c
+    '';
+  };
+
   # One-keystroke memtest from the boot menu. Worth having, but note it will
   # NOT reproduce an idle-hours AM5 lockup — only uptime tests that.
   boot.loader.systemd-boot.memtest86.enable = true;
