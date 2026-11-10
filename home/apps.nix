@@ -366,19 +366,13 @@ in
       # rust — individual packages instead of rustup to avoid NixOS friction
       # (managed by nixpkgs unstable, so always near-latest stable)
 
-      # node + claude code
+      # node. Claude Code is *not* installed from nixpkgs: it uses Anthropic's
+      # native installer (~/.local/bin/claude, self-updating), which also owns
+      # the Chrome extension's native-messaging host and the claude-cli:// URL
+      # handler. A second, nix-pinned copy lagged behind and broke the browser
+      # bridge with a version mismatch.
       nodejs_22
       pnpm
-
-      # Fast-tracked ahead of nixpkgs. The package takes an overridable
-      # `manifest` argument and derives both its version and the binary's
-      # checksum from it, so pinning our own copy is enough to move it — no
-      # hash to recompute. confs/claude-code-manifest.json is refreshed daily
-      # by .github/workflows/claude-code-bump.yml, which keeps Claude Code on
-      # the day's release without dragging the kernel along on the same bump.
-      (claude-code.override {
-        manifest = lib.importJSON ../confs/claude-code-manifest.json;
-      })
 
       # databases
       postgresql # psql client

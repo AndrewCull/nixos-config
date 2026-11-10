@@ -19,7 +19,7 @@ Currently configured for two hosts — **p14s** (ThinkPad P14s Gen 6, AMD) and *
 | Night Mode | wlsunset (eDP-1 only, 4000K night / 6500K day, 20:00–07:00) |
 | Screenshots | grim + slurp |
 | Clipboard | wl-clipboard + cliphist |
-| AI tooling | `sys-doctor` (`Mod+Shift+D`): gathers an evidence bundle (journal errors/warnings, kernel log, failed units, coredumps, thermal, memory/PSI, disk, battery, network + tailscale, `wpctl status`, niri outputs, top processes; `--last-boot` adds the previous boot, pstore and /var/crash) into `~/.cache/sys-doctor/<ts>/` and opens Claude Code in it with the `nixos-doctor` skill. `--quick` runs `claude -p` (Opus by default, `SYS_DOCTOR_MODEL` overrides; interactive mode uses the session default) with read-only tools and posts the `VERDICT:` line as a notification ("Open report" → glow). `sys-doctor-boot-check` (user service) offers "Diagnose with AI" on the first login after a boot that did not end cleanly. Agent skills live in `agents/skills/` (`nixos-doctor`, `nixos-config`) and are symlinked into `~/.claude/skills/` by `home/ai.nix` (out-of-store, so edits are live). Claude Code itself is the nixpkgs `claude-code` package, pinned ahead of nixpkgs by `confs/claude-code-manifest.json` and bumped daily — see [Keeping Inputs Current](#keeping-inputs-current). The package's own wrapper already sets `DISABLE_AUTOUPDATER=1`, so the binary never tries to rewrite its read-only store path. |
+| AI tooling | `sys-doctor` (`Mod+Shift+D`): gathers an evidence bundle (journal errors/warnings, kernel log, failed units, coredumps, thermal, memory/PSI, disk, battery, network + tailscale, `wpctl status`, niri outputs, top processes; `--last-boot` adds the previous boot, pstore and /var/crash) into `~/.cache/sys-doctor/<ts>/` and opens Claude Code in it with the `nixos-doctor` skill. `--quick` runs `claude -p` (Opus by default, `SYS_DOCTOR_MODEL` overrides; interactive mode uses the session default) with read-only tools and posts the `VERDICT:` line as a notification ("Open report" → glow). `sys-doctor-boot-check` (user service) offers "Diagnose with AI" on the first login after a boot that did not end cleanly. Agent skills live in `agents/skills/` (`nixos-doctor`, `nixos-config`) and are symlinked into `~/.claude/skills/` by `home/ai.nix` (out-of-store, so edits are live). Claude Code itself is **not** a nix package: it is Anthropic's native install at `~/.local/bin/claude`, which updates itself and also owns the Claude in Chrome native-messaging host (`~/.claude/chrome/chrome-native-host`) and the `claude-cli://` URL handler. The scripts put `~/.local/bin` first on PATH. A nixpkgs copy pinned by a daily manifest bump was dropped in Nov 2026: it fell 40+ releases behind the native install, and the version mismatch broke browser control. |
 | Theme | Gruvbox Dark Medium (via Stylix) |
 | Icons | Papirus-Dark |
 | Cursor | phinger-cursors-light |
@@ -151,7 +151,6 @@ secrets/
 confs/
   niri/config.kdl               # Niri keybindings and layout (numlock enabled at startup)
   hyprlock.conf                 # Lock screen appearance
-  claude-code-manifest.json     # Pinned Claude Code release (version + binary checksum)
 agents/
   skills/nixos-doctor/SKILL.md  # Agent skill: diagnose a sys-doctor evidence bundle
   skills/nixos-config/SKILL.md  # Agent skill: how to change this repo safely
@@ -160,20 +159,18 @@ templates/
 .github/
   dependabot.yml                # Keeps the workflows' action pins current
   workflows/update-flake-lock.yml # Weekly `nix flake update` PR
-  workflows/claude-code-bump.yml  # Daily Claude Code manifest PR
 .sops.yaml                      # sops-nix encryption rules
 ```
 
 ## Keeping Inputs Current
 
 Dependabot has no Nix ecosystem — it cannot read `flake.nix` or `flake.lock`. So the
-two halves are split:
+work is split:
 
 | File | Covers |
 |------|--------|
 | `.github/workflows/update-flake-lock.yml` | `flake.lock`. Runs `nix flake update` every Monday 06:00 UTC (or on `workflow_dispatch`) and opens a PR via `peter-evans/create-pull-request`. It calls those two steps directly rather than using `DeterminateSystems/update-flake-lock`: that composite's latest release (v28) still pins four helper actions declaring `runs.using: node20`, which raised a Node 20 deprecation warning on every run with no way to configure it away. Driving it ourselves keeps every action on `node24` and removes four third-party dependencies from a workflow holding `contents: write`. Limited to `nixpkgs home-manager stylix sops-nix niri` — **`nixpkgs-libinput` is excluded on purpose**, since it is pinned to commit `68a8af93` for libinput 1.29.2 and moving it kills keyboard/touchpad enumeration on the P14s. `herdr` pins its release tag inside the input URL, so `nix flake update` cannot move it either; bump that tag by hand. |
-| `.github/workflows/claude-code-bump.yml` | `confs/claude-code-manifest.json`. Runs daily at 07:00 UTC (or on `workflow_dispatch`) and opens a PR when a new Claude Code release exists. Claude Code ships roughly every day, so riding the weekly lock bump would mean either lagging a week or taking a kernel/mesa update every time a CLI release landed — the two want different cadences, so they get different jobs. The nixpkgs package exposes an overridable `manifest` argument and derives *both* its version and the binary's SHA-256 from it, so the bump is a single JSON file swap: no hash to recompute, no derivation to patch. It reads the same `latest` channel as nixpkgs' own `update.sh` (note `stable` is a separate, older pointer — it was 2.1.267 when `latest` was 2.1.280), and fails the run if the returned manifest's version disagrees with the one requested or omits the `linux-x64` entry. Because the manifest is still a pin, a bad release rolls back like any other generation. |
-| `.github/dependabot.yml` | The `github-actions` used by those workflows, weekly. Actions are pinned by commit SHA with a trailing `# vNN` comment (tags are mutable and thus a supply-chain risk); Dependabot bumps both. |
+| `.github/dependabot.yml` | The `github-actions` used by the workflow, weekly. Actions are pinned by commit SHA with a trailing `# vNN` comment (tags are mutable and thus a supply-chain risk); Dependabot bumps both. |
 
 The workflow needs **Settings → Actions → General → "Allow GitHub Actions to create and
 approve pull requests"** enabled, or the default `GITHUB_TOKEN` cannot open the PR.

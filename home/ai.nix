@@ -18,9 +18,8 @@ let
     (lib.filterAttrs (_: t: t == "directory") (builtins.readDir skillsDir));
 
   # Tools the scripts shell out to. claude, ghostty, niri, tailscale, wpctl come
-  # from the user PATH (claude is the nixpkgs claude-code, installed via
-  # home.packages in apps.nix and fast-tracked past nixpkgs by
-  # confs/claude-code-manifest.json) — PATH is extended below so the systemd
+  # from the user PATH (claude is Anthropic's self-updating native install in
+  # ~/.local/bin, not a nix package) — PATH is extended below so the systemd
   # user service sees them too.
   toolPath = lib.makeBinPath (with pkgs; [
     procps coreutils gnugrep gawk gnused findutils util-linux jq
@@ -31,7 +30,7 @@ let
 
   sys-doctor = pkgs.writeShellScriptBin "sys-doctor" ''
     set -uo pipefail
-    export PATH="${toolPath}:$HOME/.npm-global/bin:/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:$PATH"
+    export PATH="${toolPath}:$HOME/.local/bin:$HOME/.npm-global/bin:/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:$PATH"
 
     usage() {
       cat <<'USAGE'
@@ -194,7 +193,7 @@ let
   # a diagnosis. "Clean" = journald logged its own stop or a shutdown target.
   sys-doctor-boot-check = pkgs.writeShellScriptBin "sys-doctor-boot-check" ''
     set -uo pipefail
-    export PATH="${toolPath}:$HOME/.npm-global/bin:/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:$PATH"
+    export PATH="${toolPath}:$HOME/.local/bin:$HOME/.npm-global/bin:/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:$PATH"
     state="''${XDG_STATE_HOME:-$HOME/.local/state}/sys-doctor"
     mkdir -p "$state"
     boot=$(cat /proc/sys/kernel/random/boot_id)
