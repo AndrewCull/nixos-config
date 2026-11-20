@@ -21,7 +21,8 @@
   fileSystems."/boot" =
     { device = "/dev/disk/by-uuid/4541-61E9";
       fsType = "vfat";
-      options = [ "fmask=0022" "dmask=0022" ];
+      # 0077: bootctl flags a world-readable random seed as a security hole
+      options = [ "fmask=0077" "dmask=0077" ];
     };
 
   swapDevices = [ ];

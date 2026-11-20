@@ -15,7 +15,8 @@
 
   boot.kernelParams = [
     "amd_pstate=active"
-    "thinkpad_acpi.mic_mute_led=1"
+    # thinkpad_acpi.mic_mute_led=1 removed 2026-11-04: the kernel rejects it as
+    # an unknown parameter; the micmute LED is exposed without it.
     "rtc_cmos.use_acpi_alarm=1"    # RTC wake for hibernate timer on AMD
     "resume=/dev/disk/by-uuid/e76b244b-31f9-47ea-9c5f-50b91a02a072"  # resume device for hibernate
     "resume_offset=9897984"        # physical offset of /var/lib/swapfile for hibernate
@@ -87,6 +88,19 @@
     HandleLidSwitchDocked = "ignore";
     InhibitDelayMaxSec = 5;
   };
+
+  # 2026-11-04: after ~12 days of uptime logind started answering lid-close
+  # with "Requested hibernate operation is not supported, using regular suspend
+  # instead" — the fallback s2idle drained the battery flat over four days
+  # (boot ended 2026-10-31 at "suspend entry", next boot 2026-11-04). systemd's
+  # only runtime gate is hibernation_is_safe(): free swap must cover
+  # Active(anon). The kernel itself had room (last image: 9.7M of 14.3M pages
+  # available), so skip systemd's estimate. logind checks on the lid event,
+  # systemd-sleep checks again when the hibernate service runs.
+  systemd.services.systemd-logind.environment.SYSTEMD_BYPASS_HIBERNATION_MEMORY_CHECK = "1";
+  systemd.services.systemd-hibernate.environment.SYSTEMD_BYPASS_HIBERNATION_MEMORY_CHECK = "1";
+  systemd.services.systemd-suspend-then-hibernate.environment.SYSTEMD_BYPASS_HIBERNATION_MEMORY_CHECK = "1";
+  systemd.services.systemd-hybrid-sleep.environment.SYSTEMD_BYPASS_HIBERNATION_MEMORY_CHECK = "1";
 
   # ── Suspend reliability ─────────────────────────────
   systemd.sleep.settings.Sleep = {

@@ -427,6 +427,7 @@ in
       organicmaps
       spotify
       slack
+      signal-desktop # Signal messenger
       libreoffice
       prusa-slicer
       inkscape

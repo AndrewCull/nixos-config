@@ -10,18 +10,21 @@ let
     sock=/run/user/1000/wayvnc.sock
     ssh=${pkgs.openssh}/bin/ssh
 
-    # First session: fail early with a clear message if wayvnc isn't serving.
-    # ssh only notices a dead unix socket when the forwarded connection is
-    # opened, and `ssh -f` backgrounds before the remote command runs, so
-    # neither would surface it — wlvncc would just print "Failed to connect to
-    # server". Ask systemd rather than testing the socket path: a stopped
-    # wayvnc leaves its socket file behind. Same session powers the monitors
-    # back on (swayidle turns them off when idle, which leaves nothing to
-    # capture; an ssh session has no NIRI_SOCKET, hence the glob).
+    # First session: make sure wayvnc is serving, and fail early with a clear
+    # message if it can't be. ssh only notices a dead unix socket when the
+    # forwarded connection is opened, and `ssh -f` backgrounds before the
+    # remote command runs, so neither would surface it — wlvncc would just
+    # print "Failed to connect to server". Power the monitors on first
+    # (swayidle turns them off when idle, which leaves nothing to capture; an
+    # ssh session has no NIRI_SOCKET, hence the glob), then start wayvnc if
+    # it's down — it exits whenever its output disappears. Ask systemd rather
+    # than testing the socket path: a stopped wayvnc leaves its socket behind.
     $ssh darkstar "sh -c '
+      NIRI_SOCKET=\$(echo /run/user/1000/niri.*.sock) niri msg action power-on-monitors
+      systemctl --user is-active --quiet wayvnc || systemctl --user restart wayvnc
+      sleep 1
       systemctl --user is-active --quiet wayvnc \
         || { echo \"wayvnc.service is \$(systemctl --user is-active wayvnc)\" >&2; exit 1; }
-      NIRI_SOCKET=\$(echo /run/user/1000/niri.*.sock) niri msg action power-on-monitors
     '" || {
       echo "darkstar-desktop: wayvnc is not running on darkstar." >&2
       echo "  Is a niri session logged in there, and has darkstar been rebuilt with the remote-desktop module?" >&2
@@ -48,13 +51,17 @@ in
       PartOf = [ "graphical-session.target" ];
       After = [ "graphical-session.target" ];
       Requisite = [ "graphical-session.target" ];
+      # Keep retrying however long the monitor stays gone (see Restart below).
+      StartLimitIntervalSec = 0;
     };
     Service = {
       # wayvnc unlinks the socket on a clean exit; clear a stale one after a crash.
       ExecStartPre = "${pkgs.coreutils}/bin/rm -f %t/wayvnc.sock";
       ExecStart = "${pkgs.wayvnc}/bin/wayvnc --unix-socket %t/wayvnc.sock";
-      Restart = "on-failure";
-      RestartSec = 2;
+      # When its output disappears (the BenQ drops off HDMI when it sleeps or
+      # switches input) wayvnc exits with status 0, so on-failure never fires.
+      Restart = "always";
+      RestartSec = 5;
     };
     Install.WantedBy = [ "graphical-session.target" ];
   };
