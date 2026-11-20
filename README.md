@@ -68,7 +68,7 @@ Currently configured for two hosts — **p14s** (ThinkPad P14s Gen 6, AMD) and *
 | Email | Proton Mail (desktop), Superhuman (PWA) |
 | Chat | Slack, Signal, Teams (`teams-for-linux`; Chrome managed policy auto-launches `msteams:` meeting links into the app), Zoom |
 | AI | Claude (PWA) |
-| Dictation | Voxtype — local whisper.cpp speech-to-text typed at the cursor (wtype, clipboard fallback). `Mod+Shift+T` toggles recording (niri has no key-release binds, so no hold-to-talk); runs as the `voxtype` user service. Built-in evdev hotkey left off to avoid putting andrew in the `input` group. Config at upstream defaults (`base.en`), unmanaged so `voxtype setup model` can change it. First run: `voxtype setup --download` |
+| Dictation | Voxtype — local whisper.cpp speech-to-text typed at the cursor (wtype, clipboard fallback). `Mod+Shift+T` toggles recording (niri has no key-release binds, so no hold-to-talk); runs as the `voxtype` user service. Built-in evdev hotkey left off to avoid putting andrew in the `input` group. darkstar builds it with Vulkan (`vulkanSupport = true`) so whisper runs on the RX 9070 XT; p14s stays on CPU. Config at upstream defaults (`base.en`), unmanaged so `voxtype setup model` can change it. First run: `voxtype setup --download` |
 | Notes | Obsidian |
 | Office | LibreOffice |
 | PDF | zathura (viewer), xournalpp (annotation) |
@@ -143,7 +143,7 @@ home/
   ssh.nix                       # SSH client config
   starship.nix                  # Prompt
   theme.nix                     # Stylix overrides, icons, cursor
-  voxtype.nix                   # Voxtype dictation daemon (user service; niri bind Mod+Shift+T)
+  voxtype.nix                   # Voxtype dictation daemon (user service; niri bind Mod+Shift+T; Vulkan on darkstar)
   zellij.nix                    # Terminal multiplexer
 hosts/
   p14s/
