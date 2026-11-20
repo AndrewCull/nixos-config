@@ -142,6 +142,8 @@ binds {
 
     // ── AI ──────────────────────────────────────────
     Mod+Shift+D { spawn "sys-doctor"; }
+    // Voxtype dictation: press to start, press again to transcribe + type.
+    Mod+Shift+T { spawn "voxtype" "record" "toggle"; }
 
     // ── Notifications ─────────────────────────────────
     Mod+N       { spawn "makoctl" "dismiss"; }
